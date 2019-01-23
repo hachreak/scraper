@@ -17,6 +17,7 @@ Unzip inside the `data/driver` directory the `geckodriver` executable.
 Export from console the driver path:
 
 ```bash
+git clone https://github.com/hachreak/scraper.git
 cd scraper
 export PATH=$PATH:`pwd`/data/driver
 ```
