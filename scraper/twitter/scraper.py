@@ -36,7 +36,7 @@ baseurl = "https://twitter.com/search?"
 
 
 def get_tweets(html_source):
-    soup = bs(html_source)
+    soup = bs(html_source, "lxml")
     return [Tweet(t)
             for t in soup.body.findAll('li', attrs={'class': 'stream-item'})]
 

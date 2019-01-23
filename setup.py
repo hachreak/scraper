@@ -57,11 +57,13 @@ setup(
         'selenium>=3.141.0',
         'beautifulsoup4>=4.7.1',
         'requests>=2.21.0',
+        'click>=7.0',
+        'lxml>=4.3.0',
     ],
     #  extras_require={  # Optional
     #  },
-    #  entry_points='''
-    #      [console_scripts]
-    #      scraper-cli=scraper.cli.main:cli
-    #  ''',
+    entry_points='''
+        [console_scripts]
+        scraper-cli=scraper.cli.main:cli
+    ''',
 )
