@@ -3,3 +3,6 @@ local
 lib
 include
 *.egg-info
+*.pyc
+data/*
+share
