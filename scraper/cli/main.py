@@ -23,8 +23,9 @@ import click
 from pprint import pprint
 from functools import partial
 
-from .validators import get_hashtag
+from .validators import get_hashtag, get_tag
 from ..twitter import scraper as tscraper
+from ..instagram import scraper as iscraper
 
 
 @click.group()
@@ -44,10 +45,26 @@ def twitter():
 @click.option('--times', '-t', default=1, type=int, show_default=True,
               help="How many times open a new driver")
 def scrape(hashtag, per_driver, times):
-    """Scrape twitter."""
+    """Scrape Twitter."""
     my_scraper = partial(
         tscraper.scraper, baseurl=tscraper.baseurl, per_driver=per_driver
     )
     for t in tscraper.scrape_more(
             query=tscraper.query, q=hashtag, scraper=my_scraper, times=times):
         pprint(t._info)
+
+
+@cli.group()
+def instagram():
+    pass
+
+
+@instagram.command('scrape')
+@click.argument('hashtag', callback=get_tag)
+@click.option('--times', '-t', default=10, type=int, show_default=True,
+              help="How many post to show")
+def instagram_scrape(hashtag, times):
+    """Scrape Instagram."""
+    driver = iscraper.scrape(iscraper.url.format(hashtag))
+    for i in range(times):
+        pprint(next(driver))

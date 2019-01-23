@@ -24,3 +24,10 @@ def get_hashtag(ctx, param, value):
     if not value.startswith('#'):
         value = "#{0}".format(value)
     return value
+
+
+def get_tag(ctx, param, value):
+    """Add hash."""
+    if value.startswith('#'):
+        value = value[1:]
+    return value
