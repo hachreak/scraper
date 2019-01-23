@@ -44,13 +44,19 @@ def twitter():
               help="How many times scroll for each driver")
 @click.option('--times', '-t', default=1, type=int, show_default=True,
               help="How many times open a new driver")
-def scrape(hashtag, per_driver, times):
+@click.option('--from-id', '-f', default=None, help="Start from this id")
+def scrape(hashtag, per_driver, times, from_id):
     """Scrape Twitter."""
     my_scraper = partial(
         tscraper.scraper, baseurl=tscraper.baseurl, per_driver=per_driver
     )
     for t in tscraper.scrape_more(
-            query=tscraper.query, q=hashtag, scraper=my_scraper, times=times):
+                query=tscraper.query,
+                q=hashtag,
+                scraper=my_scraper,
+                times=times,
+                max_id=from_id
+            ):
         pprint(t._info)
 
 

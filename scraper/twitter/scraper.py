@@ -66,13 +66,15 @@ def scraper(query, baseurl, per_driver=10):
     return get_tweets(html_source)
 
 
-def scrape_more(query, q, scraper, times=10):
+def scrape_more(query, q, scraper, times=10, max_id=None):
     query = deepcopy(query)
     query['q'] = q
     for i in range(0, times):
+        if max_id:
+            query['q'] = ' '.join([q, 'max_id:{0}'.format(max_id)])
         tweets = scraper(query=query)
         if len(tweets) == 0:
             raise StopIteration()
         for t in tweets:
             yield t
-        query['q'] = ' '.join([q, 'max_id:{0}'.format(tweets[-1].id)])
+        max_id = tweets[-1].id
