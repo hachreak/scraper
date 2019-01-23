@@ -49,7 +49,6 @@ def scroll(driver, times=10):
 
 
 def load(url):
-    print("get url {0}".format(url))
     driver = webdriver.Firefox()
     driver.base_url = url
     driver.get(driver.base_url)
@@ -72,7 +71,8 @@ def scrape_more(query, q, scraper, times=10):
     query['q'] = q
     for i in range(0, times):
         tweets = scraper(query=query)
-        yield tweets
         if len(tweets) == 0:
             raise StopIteration()
+        for t in tweets:
+            yield t
         query['q'] = ' '.join([q, 'max_id:{0}'.format(tweets[-1].id)])

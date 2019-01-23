@@ -20,11 +20,9 @@
 
 from __future__ import unicode_literals
 
-import os
-import json
 import sys
 
-from datetime import datetime
+from pprint import pprint
 from functools import partial
 
 from scraper.twitter import scraper
@@ -35,8 +33,7 @@ if len(sys.argv) < 2:
     sys.exit(1)
 
 q = sys.argv[1]
-path = './data'
-per_driver = 20
+per_driver = 5
 times = 1
 
 my_scraper = partial(
@@ -44,11 +41,6 @@ my_scraper = partial(
 )
 tweets = []
 index = 1
-for ts in scraper.scrape_more(
+for t in scraper.scrape_more(
         query=scraper.query, q=q, scraper=my_scraper, times=times):
-    name = "{0}.json".format(str(datetime.now()))
-    filename = os.path.join(path, name)
-    print('save {0} in {1}'.format(index, filename))
-    index = index + 1
-    with open(filename, 'wb') as myfile:
-        myfile.write(json.dumps([t._info for t in ts]))
+    pprint(t._info)
