@@ -68,9 +68,12 @@ def instagram():
 @instagram.command('scrape')
 @click.argument('hashtag', callback=get_tag)
 @click.option('--times', '-t', default=10, type=int, show_default=True,
-              help="How many post to show")
-def instagram_scrape(hashtag, times):
+              help="How many times call the API")
+@click.option('--from-id', '-f', default=None, help="Start from this id")
+def instagram_scrape(hashtag, times, from_id):
     """Scrape Instagram."""
-    driver = iscraper.scrape(iscraper.url.format(hashtag))
-    for i in range(times):
-        pprint(next(driver))
+    driver = iscraper.scrape(
+        iscraper.url.format(hashtag), times=times, end_cursor=from_id
+    )
+    for p in driver:
+        pprint(p)

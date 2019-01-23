@@ -24,16 +24,14 @@ import requests
 url = 'https://www.instagram.com/explore/tags/{0}/'
 
 
-def scrape(url):
-    res = requests.get(url, params={'__a': 1}).json()
-    media = res['graphql']['hashtag']['edge_hashtag_to_media']
-    for r in media['edges']:
-        yield r
-    while media['page_info']['has_next_page']:
-        res = requests.get(url, params={
-            '__a': 1,
-            'max_id': media['page_info']['end_cursor']}
-        ).json()
+def scrape(url, times=1, end_cursor=None):
+    params = {'__a': 1}
+    for i in range(times):
+        if end_cursor:
+            params['max_id'] = end_cursor
+        res = requests.get(url, params=params).json()
         media = res['graphql']['hashtag']['edge_hashtag_to_media']
         for r in media['edges']:
-                yield r
+            r['_end_cursor'] = media['page_info']['end_cursor']
+            yield r
+        end_cursor = media['page_info']['end_cursor']
