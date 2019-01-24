@@ -22,6 +22,7 @@ import requests
 
 
 url = 'https://www.instagram.com/explore/tags/{0}/'
+url_post = 'https://www.instagram.com/p/{0}/'
 
 
 def scrape(url, times=1, end_cursor=None):
@@ -33,5 +34,18 @@ def scrape(url, times=1, end_cursor=None):
         media = res['graphql']['hashtag']['edge_hashtag_to_media']
         for r in media['edges']:
             r['_end_cursor'] = media['page_info']['end_cursor']
-            yield r
+            yield _get_comments(r)
         end_cursor = media['page_info']['end_cursor']
+
+
+def _get_comments(media):
+    """Get more info about this specific media post."""
+    params = {'__a': 1}
+    if 'shortcode' in media.get('node', {}).keys():
+        res = requests.get(
+            url_post.format(media['node']['shortcode']),
+            params=params
+        )
+        if res.status_code == requests.codes.ok:
+            media['_post'] = res.json()
+    return media
