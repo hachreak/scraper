@@ -67,7 +67,7 @@ def instagram():
 
 @instagram.command('scrape')
 @click.argument('hashtag', callback=get_tag)
-@click.option('--times', '-t', default=10, type=int, show_default=True,
+@click.option('--times', '-t', default=1, type=int, show_default=True,
               help="How many times call the API")
 @click.option('--from-id', '-f', default=None, help="Start from this id")
 def instagram_scrape(hashtag, times, from_id):
