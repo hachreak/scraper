@@ -18,13 +18,12 @@
 
 """Twitter scraper."""
 
-import time
 import urllib
 
-from selenium import webdriver
 from bs4 import BeautifulSoup as bs
 from copy import deepcopy
 
+from ..driver import scroll, load
 from .tweet import Tweet
 
 
@@ -41,28 +40,14 @@ def get_tweets(html_source):
             for t in soup.body.findAll('li', attrs={'class': 'stream-item'})]
 
 
-def scroll(driver, times=10):
-    for i in range(0, times):
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
-        time.sleep(1)
-    return driver
-
-
-def load(url):
-    driver = webdriver.Firefox()
-    driver.base_url = url
-    driver.get(driver.base_url)
-    return driver
-
-
 def get_url(baseurl, params):
     return ' '.join([baseurl + urllib.urlencode(params)])
 
 
 def scraper(query, baseurl, per_driver=10):
-    driver = scroll(load(get_url(baseurl, query)), per_driver)
-    html_source = driver.page_source
-    driver.close()
+    with load(get_url(baseurl, query)) as driver:
+        driver = scroll(driver, per_driver)
+        html_source = driver.page_source
     return get_tweets(html_source)
 
 
