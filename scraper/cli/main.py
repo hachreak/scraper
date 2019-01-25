@@ -73,7 +73,7 @@ def instagram():
 def instagram_scrape(hashtag, times, from_id):
     """Scrape Instagram."""
     driver = iscraper.scrape(
-        iscraper.url.format(hashtag), times=times, end_cursor=from_id
+        iscraper.url_search.format(hashtag), times=times, end_cursor=from_id
     )
     for p in driver:
         pprint(p)

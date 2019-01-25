@@ -19,10 +19,19 @@
 """Instagram scraper."""
 
 import requests
+import itertools
+
+from .. import driver as drv
 
 
-url = 'https://www.instagram.com/explore/tags/{0}/'
+url_search = 'https://www.instagram.com/explore/tags/{0}/'
 url_post = 'https://www.instagram.com/p/{0}/'
+
+query_hash = 'f0986789a5c5d17c2400faebf16efd0d'
+query_comments = {
+    'query_hash': 'f0986789a5c5d17c2400faebf16efd0d',
+}
+url_query = 'https://www.instagram.com/graphql/query/'
 
 
 def scrape(url, times=1, end_cursor=None):
@@ -42,10 +51,53 @@ def _get_comments(media):
     """Get more info about this specific media post."""
     params = {'__a': 1}
     if 'shortcode' in media.get('node', {}).keys():
+        # get post page
         res = requests.get(
             url_post.format(media['node']['shortcode']),
             params=params
         )
         if res.status_code == requests.codes.ok:
             media['_post'] = res.json()
+            comments = media['_post']['graphql']['shortcode_media'][
+                'edge_media_to_comment']['edges']
+            shmedia = media['_post']['graphql']['shortcode_media']
+            info = shmedia['edge_media_to_comment']['page_info']
+            # check if there are more comments
+            if info['has_next_page']:
+                shortcode = media['_post']['graphql'][
+                    'shortcode_media']['shortcode']
+                # get all other comments
+                comments.extend(
+                    _get_more_comments(url_post.format(shortcode))
+                )
+                # sort comments
+                sorted(comments, key=lambda x: x['node']['created_at'])
+                media['_post']['graphql']['shortcode_media'][
+                    'edge_media_to_comment']['edges'] = comments
     return media
+
+
+def _get_more_comments(url):
+    with drv.load(url) as driver:
+        query = 'query_hash={0}'.format(query_hash)
+        get_more = True
+        while get_more:
+            link = _get_link_more_comments(driver)
+            get_more = link is not None
+            if link:
+                link.click()
+        list_of_list = [
+            r.response.body['data']['shortcode_media'][
+                'edge_media_to_comment']['edges']
+            for r in driver.requests if query in r.path and r.response]
+        return list(itertools.chain(*list_of_list))
+
+
+def _get_link_more_comments(driver):
+    #  soup = bs(driver.page_source, "lxml")
+    els = [el for el in driver.find_elements_by_tag_name('button')
+           if 'comments' in el.text]
+    try:
+        return els[0]
+    except IndexError:
+        return None
