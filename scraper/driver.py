@@ -41,4 +41,4 @@ class load(object):
         return self.driver
 
     def __exit__(self, type, value, traceback):
-        self.driver.close()
+        self.driver.quit()
