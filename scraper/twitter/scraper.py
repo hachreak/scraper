@@ -41,7 +41,7 @@ def get_tweets(html_source):
 
 
 def get_url(baseurl, params):
-    return ' '.join([baseurl + urllib.urlencode(params)])
+    return ' '.join([baseurl + urllib.parse.urlencode(params)])
 
 
 def scraper(query, baseurl, per_driver=10):
