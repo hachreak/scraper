@@ -20,7 +20,7 @@
 
 import time
 
-from selenium import webdriver
+from seleniumwire import webdriver
 
 
 def scroll(driver, times=10):
