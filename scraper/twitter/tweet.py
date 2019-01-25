@@ -34,7 +34,19 @@ class Tweet(object):
             'permalink': self.permalink,
             'id': self.id,
             'time': self.time,
+            'comments': {
+                'count': self.comments_count
+            }
         }
+
+    @property
+    def comments_count(self):
+        try:
+            return int(self._soup.find('span', attrs={
+                'class': 'ProfileTweet-actionCountForPresentation'
+            }).text)
+        except ValueError:
+            return 0
 
     @property
     def text(self):
