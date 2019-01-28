@@ -22,9 +22,11 @@ import urllib
 
 from bs4 import BeautifulSoup as bs
 from copy import deepcopy
+from selenium.common.exceptions import NoSuchElementException
+from time import sleep
 
 from ..driver import scroll, load
-from .tweet import Tweet
+from .tweet import Tweet, Comment
 
 
 query = {
@@ -36,8 +38,44 @@ baseurl = "https://twitter.com/search?"
 
 def get_tweets(html_source):
     soup = bs(html_source, "lxml")
-    return [Tweet(t)
+    return [get_comments(Tweet(t))
             for t in soup.body.findAll('li', attrs={'class': 'stream-item'})]
+
+
+def get_comments(tweet):
+    if tweet._info['comments']['count'] > 0:
+        with load(tweet.url) as driver:
+            # scroll page until the end
+            while True:
+                soup = bs(driver.page_source, "lxml")
+                count = Comment.count(soup)
+                if count >= tweet._info['comments']['count']:
+                    # I have scrolled all replies
+                    break
+                # avg loaded tweet per scroll: 18
+                times = (tweet._info['comments']['count'] // 18) + 1
+                scroll(driver, times)
+            # click on "more reply"
+            more_reply(driver)
+            soup = bs(driver.page_source, "lxml")
+            # for each conversation
+            for conv in Comment.conversations(soup):
+                tweet.add_conversation([
+                    Comment(c) for c in Comment.raw_comments(conv)
+                ])
+
+    return tweet
+
+
+def more_reply(driver):
+    try:
+        for link in driver.find_elements_by_css_selector(
+                '.stream ol#stream-items-id > li > ol.stream-items > li '
+                '> a.ThreadedConversation-moreRepliesLink'):
+            link.click()
+            sleep(1)
+    except NoSuchElementException:
+        pass
 
 
 def get_url(baseurl, params):

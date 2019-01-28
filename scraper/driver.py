@@ -35,7 +35,7 @@ class load(object):
         self.driver = webdriver.Firefox()
         self.driver.base_url = url
         self.driver.get(self.driver.base_url)
-        self.driver.implicitly_wait(10)
+        self.driver.implicitly_wait(3)
 
     def __enter__(self):
         return self.driver

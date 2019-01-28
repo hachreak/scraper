@@ -35,8 +35,10 @@ class Tweet(object):
             'id': self.id,
             'time': self.time,
             'comments': {
-                'count': self.comments_count
-            }
+                'count': self.comments_count,
+                'total': 0,
+                'conversations': [],
+            },
         }
 
     @property
@@ -117,3 +119,39 @@ class Tweet(object):
         return self._soup.find(
             'span', attrs={'class': '_timestamp'}
         )['data-time']
+
+    @property
+    def url(self):
+        return 'https://twitter.com/{0}/status/{1}'.format(
+            self._info['username'][1:], self._info['id']
+        )
+
+    @property
+    def comments(self):
+        return self._info['comments'].get('conversations', [])
+
+    def add_conversation(self, conversation):
+        self._info['comments']['conversations'].append([
+            c._info for c in conversation
+        ])
+        self._info['comments']['total'] += len(conversation)
+
+
+class Comment(Tweet):
+
+    @classmethod
+    def conversations(cls, soup):
+        """Get the all conversions."""
+        return soup.findAll(
+            'li', attrs={'class': 'ThreadedConversation--loneTweet'}
+        ) + soup.findAll(
+            'li', attrs={'class': 'ThreadedConversation'}
+        )
+
+    @classmethod
+    def raw_comments(cls, soup):
+        return soup.findAll('li', attrs={'class': 'stream-item'})
+
+    @classmethod
+    def count(cls, soup):
+        return len(cls.raw_comments(soup))
