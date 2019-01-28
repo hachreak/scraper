@@ -22,6 +22,7 @@ import click
 
 from pprint import pprint
 from functools import partial
+from copy import deepcopy
 
 from .validators import get_hashtag, get_tag
 from ..twitter import scraper as tscraper
@@ -45,13 +46,20 @@ def twitter():
 @click.option('--times', '-t', default=1, type=int, show_default=True,
               help="How many times open a new driver")
 @click.option('--from-id', '-f', default=None, help="Start from this id")
-def scrape(hashtag, per_driver, times, from_id):
+@click.option('--language', '-l', default=None, help="Filter by language")
+def scrape(hashtag, per_driver, times, from_id, language):
     """Scrape Twitter."""
     my_scraper = partial(
         tscraper.scraper, baseurl=tscraper.baseurl, per_driver=per_driver
     )
+
+    # build query
+    query = deepcopy(tscraper.query)
+    if language:
+        query['l'] = language
+
     for t in tscraper.scrape_more(
-                query=tscraper.query,
+                query=query,
                 q=hashtag,
                 scraper=my_scraper,
                 times=times,

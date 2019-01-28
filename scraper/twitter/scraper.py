@@ -37,12 +37,14 @@ baseurl = "https://twitter.com/search?"
 
 
 def get_tweets(html_source):
+    """Get all tweets from the page."""
     soup = bs(html_source, "lxml")
     return [get_comments(Tweet(t))
             for t in soup.body.findAll('li', attrs={'class': 'stream-item'})]
 
 
 def get_comments(tweet):
+    """Get single comments of the tweet."""
     if tweet._info['comments']['count'] > 0:
         with load(tweet.url) as driver:
             old_count = -1
@@ -71,6 +73,7 @@ def get_comments(tweet):
 
 
 def more_reply(driver):
+    """Get more comments clicking on more reply link."""
     try:
         for link in driver.find_elements_by_css_selector(
                 '.stream ol#stream-items-id > li > ol.stream-items > li '
@@ -82,10 +85,12 @@ def more_reply(driver):
 
 
 def get_url(baseurl, params):
+    """Build page url."""
     return ' '.join([baseurl + urllib.parse.urlencode(params)])
 
 
 def scraper(query, baseurl, per_driver=10):
+    """Download tweets opening the twitter page, scrolling X times."""
     with load(get_url(baseurl, query)) as driver:
         driver = scroll(driver, per_driver)
         html_source = driver.page_source
@@ -93,6 +98,7 @@ def scraper(query, baseurl, per_driver=10):
 
 
 def scrape_more(query, q, scraper, times=10, max_id=None):
+    """Get tweets opening Y times selenium."""
     query = deepcopy(query)
     query['q'] = q
     for i in range(0, times):
