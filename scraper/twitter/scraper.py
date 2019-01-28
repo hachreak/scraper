@@ -45,16 +45,19 @@ def get_tweets(html_source):
 def get_comments(tweet):
     if tweet._info['comments']['count'] > 0:
         with load(tweet.url) as driver:
+            old_count = -1
             # scroll page until the end
             while True:
                 soup = bs(driver.page_source, "lxml")
                 count = Comment.count(soup)
-                if count >= tweet._info['comments']['count']:
+                if count >= tweet._info['comments']['count'] \
+                        or old_count == count:
                     # I have scrolled all replies
                     break
                 # avg loaded tweet per scroll: 18
                 times = (tweet._info['comments']['count'] // 18) + 1
                 scroll(driver, times)
+                old_count = count
             # click on "more reply"
             more_reply(driver)
             soup = bs(driver.page_source, "lxml")
