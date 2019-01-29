@@ -136,6 +136,14 @@ class Tweet(object):
         ])
         self._info['comments']['total'] += len(conversation)
 
+    @classmethod
+    def get_tweets(cls, soup):
+        """Get tweets from html soup."""
+        return [
+            Tweet(t)
+            for t in soup.body.findAll('li', attrs={'class': 'stream-item'})
+        ]
+
 
 class Comment(Tweet):
 

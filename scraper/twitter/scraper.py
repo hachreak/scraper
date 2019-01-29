@@ -25,7 +25,7 @@ from copy import deepcopy
 from selenium.common.exceptions import NoSuchElementException
 from time import sleep
 
-from ..driver import scroll, load
+from ..driver import goto_end_page, load, scroll
 from .tweet import Tweet, Comment
 
 
@@ -39,37 +39,43 @@ baseurl = "https://twitter.com/search?"
 def get_tweets(html_source):
     """Get all tweets from the page."""
     soup = bs(html_source, "lxml")
-    return [get_comments(Tweet(t))
-            for t in soup.body.findAll('li', attrs={'class': 'stream-item'})]
+    # get tweets
+    tweets = Tweet.get_tweets(soup)
+    # and all comments for each one
+    for tweet in tweets:
+        if tweet._info['comments']['count'] > 0:
+            for conversation in get_comments(tweet.url):
+                tweet.add_conversation(conversation)
+    return tweets
 
 
-def get_comments(tweet):
+def get_comments(url):
     """Get single comments of the tweet."""
-    if tweet._info['comments']['count'] > 0:
-        with load(tweet.url) as driver:
-            old_count = -1
-            # scroll page until the end
-            while True:
-                soup = bs(driver.page_source, "lxml")
-                count = Comment.count(soup)
-                if count >= tweet._info['comments']['count'] \
-                        or old_count == count:
-                    # I have scrolled all replies
-                    break
-                # avg loaded tweet per scroll: 18
-                times = (tweet._info['comments']['count'] // 18) + 1
-                scroll(driver, times)
-                old_count = count
-            # click on "more reply"
-            more_reply(driver)
-            soup = bs(driver.page_source, "lxml")
-            # for each conversation
-            for conv in Comment.conversations(soup):
-                tweet.add_conversation([
-                    Comment(c) for c in Comment.raw_comments(conv)
-                ])
+    with load(url) as driver:
+        # scroll page until the end
+        goto_end_page(driver, IsLastComment(driver))
+        soup = bs(driver.page_source, "lxml")
+        # click on "more reply"
+        more_reply(driver)
+        soup = bs(driver.page_source, "lxml")
+        # for each conversation
+        for conv in Comment.conversations(soup):
+            yield [Comment(c) for c in Comment.raw_comments(conv)]
 
-    return tweet
+
+class IsLastComment(object):
+
+    def __init__(self, driver):
+        self._driver = driver
+
+    def __call__(self):
+        try:
+            self._driver.find_element_by_css_selector(
+                '.timeline-end.has-more-items .stream-end'
+            )
+            return False
+        except NoSuchElementException:
+            return True
 
 
 def more_reply(driver):

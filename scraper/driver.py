@@ -20,12 +20,21 @@
 
 import time
 
+from selenium.webdriver.common.keys import Keys
 from seleniumwire import webdriver
 
 
 def scroll(driver, times=10):
     for i in range(0, times):
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+        time.sleep(1)
+    return driver
+
+
+def goto_end_page(driver, is_ended):
+    page = driver.find_element_by_tag_name('body')
+    while not is_ended():
+        page.send_keys(Keys.PAGE_DOWN)
         time.sleep(1)
     return driver
 
