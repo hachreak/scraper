@@ -19,6 +19,9 @@
 """Tweet."""
 
 
+video_url = 'https://twitter.com/i/videos/tweet/{0}'
+
+
 class Tweet(object):
 
     def __init__(self, soup):
@@ -39,6 +42,7 @@ class Tweet(object):
                 'total': 0,
                 'conversations': [],
             },
+            'video': self.video,
         }
 
     @property
@@ -129,6 +133,15 @@ class Tweet(object):
     @property
     def comments(self):
         return self._info['comments'].get('conversations', [])
+
+    @property
+    def video(self):
+        video = self._soup.find('video')
+        if video:
+            return {
+                'poster': video.attrs['poster'],
+                'src': video_url.format(self.id),
+            }
 
     def add_conversation(self, conversation):
         self._info['comments']['conversations'].append([
