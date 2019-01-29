@@ -19,8 +19,8 @@
 """CLI main."""
 
 import click
+import json
 
-from pprint import pprint
 from functools import partial
 from copy import deepcopy
 
@@ -65,7 +65,7 @@ def scrape(hashtag, per_driver, times, from_id, language):
                 times=times,
                 max_id=from_id
             ):
-        pprint(t._info)
+        print(json.dumps(t._info))
 
 
 @cli.group()
@@ -80,8 +80,8 @@ def instagram():
 @click.option('--from-id', '-f', default=None, help="Start from this id")
 def instagram_scrape(hashtag, times, from_id):
     """Scrape Instagram."""
-    driver = iscraper.scrape(
+    scraper = iscraper.scrape(
         iscraper.url_search.format(hashtag), times=times, end_cursor=from_id
     )
-    for p in driver:
-        pprint(p)
+    for post in scraper:
+        print(json.dumps(post))
