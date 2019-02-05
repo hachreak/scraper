@@ -53,6 +53,8 @@ class Tweet(object):
             }).text)
         except ValueError:
             return 0
+        except AttributeError:
+            return 0
 
     @property
     def text(self):
@@ -76,53 +78,72 @@ class Tweet(object):
         try:
             return self._soup.find('span', attrs={'class': 'username'}).text
         except AttributeError:
-            pass
+            return ''
 
     @property
     def fullname(self):
         try:
             return self._soup.find('strong', attrs={'class': 'fullname'}).text
         except AttributeError:
-            pass
+            return ''
 
     @property
     def hashtags(self):
-        links = self._soup.find('p').findAll(
-            'a', attrs={'data-query-source': 'hashtag_click'}
-        )
-        return [a.text for a in links]
+        try:
+            links = self._soup.find('p').findAll(
+                'a', attrs={'data-query-source': 'hashtag_click'}
+            )
+            return [a.text for a in links]
+        except AttributeError:
+            return []
 
     @property
     def likes(self):
-        return self._soup.find(
-            'div', attrs={'class': 'ProfileTweet-action--favorite'}
-        ).find(
-            'span', attrs={'class': 'ProfileTweet-actionCountForPresentation'}
-        ).text
+        try:
+            return self._soup.find(
+                'div', attrs={'class': 'ProfileTweet-action--favorite'}
+            ).find(
+                'span', attrs={
+                    'class': 'ProfileTweet-actionCountForPresentation'
+                }
+            ).text
+        except AttributeError:
+            return 0
 
     @property
     def retweets(self):
-        return self._soup.find(
-            'div', attrs={'class': 'ProfileTweet-action--retweet'}
-        ).find(
-            'span', attrs={'class': 'ProfileTweet-actionCountForPresentation'}
-        ).text
+        try:
+            return self._soup.find(
+                'div', attrs={'class': 'ProfileTweet-action--retweet'}
+            ).find(
+                'span', attrs={
+                    'class': 'ProfileTweet-actionCountForPresentation'
+                }
+            ).text
+        except AttributeError:
+            return 0
 
     @property
     def permalink(self):
-        return self._soup.find(
-            'div', attrs={'class': 'tweet'}
-        )['data-permalink-path']
+        try:
+            return self._soup.find(
+                'div', attrs={'class': 'tweet'}
+            ).get('data-permalink-path', '')
+        except AttributeError:
+            return ""
 
     @property
     def id(self):
-        return self._soup['data-item-id']
+        return self._soup.get('data-item-id')
 
     @property
     def time(self):
-        return self._soup.find(
-            'span', attrs={'class': '_timestamp'}
-        )['data-time']
+        try:
+            return self._soup.find(
+                'span', attrs={'class': '_timestamp'}
+            ).get('data-time')
+        except AttributeError:
+            return None
 
     @property
     def url(self):

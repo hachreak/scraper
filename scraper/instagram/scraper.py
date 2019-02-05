@@ -21,6 +21,10 @@
 import requests
 import itertools
 
+from time import sleep
+from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import StaleElementReferenceException
+
 from .. import driver as drv
 
 
@@ -77,6 +81,14 @@ def _get_comments(media):
     return media
 
 
+def try_again(fun, exc=StaleElementReferenceException, times=5):
+    for _ in range(times):
+        try:
+            return fun()
+        except exc:
+            sleep(1)
+
+
 def _get_more_comments(url):
     with drv.load(url) as driver:
         query = 'query_hash={0}'.format(query_hash)
@@ -85,7 +97,7 @@ def _get_more_comments(url):
             link = _get_link_more_comments(driver)
             get_more = link is not None
             if link:
-                link.click()
+                try_again(lambda: link.send_keys(Keys.ENTER))
         list_of_list = [
             r.response.body['data']['shortcode_media'][
                 'edge_media_to_comment']['edges']
@@ -94,9 +106,10 @@ def _get_more_comments(url):
 
 
 def _get_link_more_comments(driver):
-    #  soup = bs(driver.page_source, "lxml")
-    els = [el for el in driver.find_elements_by_tag_name('button')
-           if 'comments' in el.text]
+    els = try_again(
+        lambda: [el for el in driver.find_elements_by_tag_name('button')
+                 if 'comments' in el.text]
+    ) or []
     try:
         return els[0]
     except IndexError:
