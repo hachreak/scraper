@@ -60,6 +60,7 @@ setup(
         'click>=7.0',
         'lxml>=4.3.0',
         'selenium-wire>=1.0.0',
+        'pyenchant>=2.0.0',
     ],
     #  extras_require={  # Optional
     #  },

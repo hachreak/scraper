@@ -178,6 +178,15 @@ class Tweet(object):
             for t in soup.body.findAll('li', attrs={'class': 'stream-item'})
         ]
 
+    @classmethod
+    def iterate(cls, tweet_info):
+        """Iterate throw tweet and its comments."""
+        yield tweet_info
+        if tweet_info['comments']['total'] > 0:
+            for c in tweet_info['comments']['conversations']:
+                for conv in c:
+                    yield conv
+
 
 class Comment(Tweet):
 
