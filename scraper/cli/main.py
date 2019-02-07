@@ -80,8 +80,8 @@ def stats(input_, language, percentage):
     """Show some statistics about the tweets."""
     if language:
         is_lang = s.is_of_lang(
-            lambda w: not w.startswith('#'),
             lang=language,
+            filter_text=lambda w: not w.startswith('#'),
             percentage=percentage
         )
     count_all_posts = 0
