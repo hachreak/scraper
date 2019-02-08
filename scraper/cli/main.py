@@ -130,17 +130,22 @@ def stats(input_, language, percentage):
         if not language or is_lang(post['text']):
             count_posts += 1
             users_posting[line['username']] += 1
+            users[post['username']] += 1
+            for ht in post['hashtags']:
+                hashtags[ht.lower()] += 1
             if post['video']:
                 count_posts_with_video += 1
                 count_videos += len(post['video'])
             if post['retweets']:
                 count_retweets_posts += s.parse_humanized_int(post['retweets'])
+                count_retweets += s.parse_humanized_int(post['retweets'])
             if post['likes']:
                 count_likes_posts += s.parse_humanized_int(post['likes'])
+                count_likes += s.parse_humanized_int(post['likes'])
             if post['comments']['total'] == 0:
                 count_without_comments += 1
             if post.get('image', []) != []:
-                count_comments_with_imgs += 1
+                count_post_with_imgs += 1
             count_imgs += len(post.get('image', []))
             timestamp = datetime.fromtimestamp(int(post['time']))
             if date_from > timestamp:
@@ -167,6 +172,9 @@ def stats(input_, language, percentage):
     print('# all retweets: {0}'.format(count_retweets_posts))
     print('# post retweets: {0}'.format(count_retweets_posts))
     print('# posts without comments: {0}'.format(count_without_comments))
+    print('# users with less than 5 posts/comments: {0}'.format(
+        len(list(filter(lambda x: x < 5, users.values())))
+    ))
     print('most used hashtags:')
     for ht in sorted(hashtags, key=hashtags.__getitem__, reverse=True)[:20]:
         print('\t{0} = {1}'.format(ht, hashtags[ht]))
