@@ -105,53 +105,56 @@ def stats(input_, language, percentage):
     hashtags = defaultdict(lambda: 0)
     date_from = datetime.now()
     date_to = datetime.now()
+    ids = []
     for line in input_:
         line = json.loads(line)
         count_all_posts += 1
         gen = tweet.Tweet.iterate(line)
         post = next(gen)
-        for t in gen:
-            count_all_comments += 1
-            if not language or is_lang(t['text']):
-                count_comments += 1
-                if t['video']:
-                    count_comments_with_video += 1
-                    count_videos += len(t['video'])
-                users[t['username']] += 1
-                for ht in t['hashtags']:
+        if post['id'] not in ids:
+            ids.append(post['id'])
+            for t in gen:
+                count_all_comments += 1
+                if not language or is_lang(t['text']):
+                    count_comments += 1
+                    if t['video']:
+                        count_comments_with_video += 1
+                        count_videos += len(t['video'])
+                    users[t['username']] += 1
+                    for ht in t['hashtags']:
+                        hashtags[ht.lower()] += 1
+                    if t['retweets']:
+                        count_retweets += s.parse_humanized_int(t['retweets'])
+                    if t['likes']:
+                        count_likes += s.parse_humanized_int(t['likes'])
+                    if t.get('image', []) != []:
+                        count_comments_with_imgs += 1
+                    count_imgs += len(t.get('image', []))
+            if not language or is_lang(post['text']):
+                count_posts += 1
+                users_posting[line['username']] += 1
+                users[post['username']] += 1
+                for ht in post['hashtags']:
                     hashtags[ht.lower()] += 1
-                if t['retweets']:
-                    count_retweets += s.parse_humanized_int(t['retweets'])
-                if t['likes']:
-                    count_likes += s.parse_humanized_int(t['likes'])
-                if t.get('image', []) != []:
-                    count_comments_with_imgs += 1
-                count_imgs += len(t.get('image', []))
-        if not language or is_lang(post['text']):
-            count_posts += 1
-            users_posting[line['username']] += 1
-            users[post['username']] += 1
-            for ht in post['hashtags']:
-                hashtags[ht.lower()] += 1
-            if post['video']:
-                count_posts_with_video += 1
-                count_videos += len(post['video'])
-            if post['retweets']:
-                count_retweets_posts += s.parse_humanized_int(post['retweets'])
-                count_retweets += s.parse_humanized_int(post['retweets'])
-            if post['likes']:
-                count_likes_posts += s.parse_humanized_int(post['likes'])
-                count_likes += s.parse_humanized_int(post['likes'])
-            if post['comments']['total'] == 0:
-                count_without_comments += 1
-            if post.get('image', []) != []:
-                count_post_with_imgs += 1
-            count_imgs += len(post.get('image', []))
-            timestamp = datetime.fromtimestamp(int(post['time']))
-            if date_from > timestamp:
-                date_from = timestamp
-            if date_to < timestamp:
-                date_to = timestamp
+                if post['video']:
+                    count_posts_with_video += 1
+                    count_videos += len(post['video'])
+                if post['retweets']:
+                    count_retweets_posts += s.parse_humanized_int(post['retweets'])
+                    count_retweets += s.parse_humanized_int(post['retweets'])
+                if post['likes']:
+                    count_likes_posts += s.parse_humanized_int(post['likes'])
+                    count_likes += s.parse_humanized_int(post['likes'])
+                if post['comments']['total'] == 0:
+                    count_without_comments += 1
+                if post.get('image', []) != []:
+                    count_post_with_imgs += 1
+                count_imgs += len(post.get('image', []))
+                timestamp = datetime.fromtimestamp(int(post['time']))
+                if date_from > timestamp:
+                    date_from = timestamp
+                if date_to < timestamp:
+                    date_to = timestamp
 
     if language:
         print('language: {0}'.format(language))
