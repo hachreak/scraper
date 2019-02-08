@@ -233,6 +233,9 @@ def instagram_stats(input_, language, percentage):
     count_posts = 0
     count_posts_likes = 0
     count_comments = 0
+    date_from = datetime.now()
+    date_to = datetime.now()
+    users = defaultdict(lambda: 0)
     for line in input_:
         try:
             post = ipost.Post(json.loads(line))._info
@@ -242,11 +245,25 @@ def instagram_stats(input_, language, percentage):
                     count_posts += 1
                     count_posts_likes += post['likes']
                     count_comments += post['comments']['count']
+                users[post['username']] += 1
+                timestamp = datetime.fromtimestamp(int(post['time']))
+                if date_from > timestamp:
+                    date_from = timestamp
+                if date_to < timestamp:
+                    date_to = timestamp
+            ids.append(post['id'])
         except ipost.DeletedPost:
             pass
         except json.decoder.JSONDecodeError:
             pass
 
+    if language:
+        print('language: {0}'.format(language))
+    print('period of time: from {0} to {1}'.format(date_from, date_to))
+    print('# users: {0}'.format(len(users.keys())))
+    print('# users with less than 5 posts/comments: {0}'.format(
+        len(list(filter(lambda x: x < 5, users.values())))
+    ))
     print("# posts: {0} of {1}".format(count_posts, count_all_posts))
     print("# post likes: {0}".format(count_posts_likes))
     print("# likes / # posts: {0:0.2f}".format(
@@ -254,3 +271,8 @@ def instagram_stats(input_, language, percentage):
     print('# comments: {0}'.format(count_comments))
     print("# comments / # posts: {0:0.2f}".format(
         count_comments / count_posts))
+    print('most posting users (# post):')
+    for username in sorted(
+            users, key=users.__getitem__, reverse=True)[:20]:
+        print('\t{0} = {1}'.format(username, users[username]))
+    print('\t...')

@@ -24,6 +24,9 @@ class Post(object):
             "id": self.id,
             "image": self.imgs,
             "likes": self.likes,
+            "time": self.time,
+            "username": self.owner['username'],
+            "owner": self.owner,
         }
 
     @property
@@ -69,3 +72,12 @@ class Post(object):
     def likes(self):
         return self._raw['_post']['graphql']['shortcode_media'][
             'edge_media_preview_like']['count']
+
+    @property
+    def time(self):
+        return self._raw['_post']['graphql']['shortcode_media'][
+            'taken_at_timestamp']
+
+    @property
+    def owner(self):
+        return self._raw['_post']['graphql']['shortcode_media']['owner']
