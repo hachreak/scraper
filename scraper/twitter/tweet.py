@@ -93,7 +93,7 @@ class Tweet(object):
             links = self._soup.find('p').findAll(
                 'a', attrs={'data-query-source': 'hashtag_click'}
             )
-            return [a.text for a in links]
+            return [a.text.strip().lower() for a in links]
         except AttributeError:
             return []
 

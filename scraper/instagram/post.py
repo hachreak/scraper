@@ -1,6 +1,8 @@
 
 """Instagram post."""
 
+import json
+
 from copy import deepcopy
 
 
@@ -27,6 +29,9 @@ class Post(object):
             "time": self.time,
             "username": self.owner['username'],
             "owner": self.owner,
+            "video": self.video,
+            "hashtags": self.hashtags,
+            "location": self.location,
         }
 
     @property
@@ -81,3 +86,29 @@ class Post(object):
     @property
     def owner(self):
         return self._raw['_post']['graphql']['shortcode_media']['owner']
+
+    @property
+    def video(self):
+        sh = self._raw['_post']['graphql']['shortcode_media']
+        if sh['is_video']:
+            return {
+                'views': sh['video_view_count'],
+                'duration': sh['video_duration'],
+                'preview': sh['thumbnail_src'],
+            }
+
+    @property
+    def hashtags(self):
+        return set([
+            t.strip().lower()
+            for t in self.text.split(' ') if t.startswith('#')
+        ])
+
+    @property
+    def location(self):
+        sh = self._raw['_post']['graphql']['shortcode_media']
+        if sh['location']:
+            sh['location']['address_json'] = json.loads(
+                    sh['location'].get('address_json') or '{}'
+            )
+        return sh['location']

@@ -2,6 +2,7 @@
 """Grep statistics from text."""
 
 import enchant
+import string
 
 
 def is_of_lang(lang, filter_text=None, percentage=0.5):
@@ -36,3 +37,9 @@ def parse_humanized_int(text):
         mult = 1000000000
         text = text[:-1]
     return int(float(text) * mult)
+
+
+def remove_punctuations(s):
+    """Remove punctuations."""
+    tr = str.maketrans("", "", string.punctuation)
+    return s.translate(tr)
