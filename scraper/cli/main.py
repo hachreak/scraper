@@ -29,7 +29,7 @@ from datetime import datetime
 from .validators import get_hashtag, get_tag
 from .. import stats as s
 from ..twitter import scraper as tscraper, tweet
-from ..instagram import scraper as iscraper
+from ..instagram import scraper as iscraper, post as ipost
 
 
 @click.group()
@@ -140,7 +140,9 @@ def stats(input_, language, percentage):
                     count_posts_with_video += 1
                     count_videos += len(post['video'])
                 if post['retweets']:
-                    count_retweets_posts += s.parse_humanized_int(post['retweets'])
+                    count_retweets_posts += s.parse_humanized_int(
+                        post['retweets']
+                    )
                     count_retweets += s.parse_humanized_int(post['retweets'])
                 if post['likes']:
                     count_likes_posts += s.parse_humanized_int(post['likes'])
@@ -163,6 +165,7 @@ def stats(input_, language, percentage):
     print('# posts: {0} of {1}'.format(count_posts, count_all_posts))
     print('# comments: {0} of {1}'.format(count_comments, count_all_comments))
     print('# comments / # post: {0:0.2f}'.format(count_comments / count_posts))
+    print('# likes / # post: {0:0.2f}'.format(count_likes_posts / count_posts))
     print('# videos: {0}'.format(count_videos))
     print('# post with video: {0}'.format(count_posts_with_video))
     print('# comments with video: {0}'.format(count_comments_with_video))
@@ -209,3 +212,45 @@ def instagram_scrape(hashtag, times, from_id):
     )
     for post in scraper:
         print(json.dumps(post))
+
+
+@instagram.command('stats')
+@click.argument('input_', type=click.File('r'))
+@click.option('--language', '-l', default=None, help="Filter by language")
+@click.option('--percentage', '-p', default=0.5,
+              help="Percentage of X words to be considered X")
+def instagram_stats(input_, language, percentage):
+    """Show some statistics about the posts."""
+    if language:
+        is_lang = s.is_of_lang(
+            lang=language,
+            filter_text=lambda w: not w.startswith('#'),
+            percentage=percentage
+        )
+
+    ids = []
+    count_all_posts = 0
+    count_posts = 0
+    count_posts_likes = 0
+    count_comments = 0
+    for line in input_:
+        try:
+            post = ipost.Post(json.loads(line))._info
+            if post['id'] not in ids:
+                count_all_posts += 1
+                if not language or is_lang(post['text']):
+                    count_posts += 1
+                    count_posts_likes += post['likes']
+                    count_comments += post['comments']['count']
+        except ipost.DeletedPost:
+            pass
+        except json.decoder.JSONDecodeError:
+            pass
+
+    print("# posts: {0} of {1}".format(count_posts, count_all_posts))
+    print("# post likes: {0}".format(count_posts_likes))
+    print("# likes / # posts: {0:0.2f}".format(
+        count_posts_likes / count_posts))
+    print('# comments: {0}'.format(count_comments))
+    print("# comments / # posts: {0:0.2f}".format(
+        count_comments / count_posts))
