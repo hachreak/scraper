@@ -66,14 +66,14 @@ def ids(hashtag, per_driver, times, from_id, language):
     if language:
         query['l'] = language
 
-    for id_ in tscraper.scrape_more(
+    for id_, username in tscraper.scrape_more(
                 query=query,
                 q=hashtag,
                 scraper=my_scraper,
                 times=times,
                 max_id=from_id
             ):
-        print(id_)
+        print('{0}, {1}'.format(id_, username))
 
 
 @twitter.command()

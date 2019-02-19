@@ -75,8 +75,12 @@ class Tweet(object):
 
     @property
     def username(self):
+        return self.get_username(self._soup)
+
+    @classmethod
+    def get_username(self, soup):
         try:
-            return self._soup.find('span', attrs={'class': 'username'}).text
+            return soup.find('span', attrs={'class': 'username'}).text
         except AttributeError:
             return ''
 
@@ -134,7 +138,7 @@ class Tweet(object):
 
     @property
     def id(self):
-        return self.get_id()
+        return self.get_id(self._soup)
 
     @classmethod
     def get_id(cls, soup):
@@ -183,11 +187,10 @@ class Tweet(object):
         ]
 
     @classmethod
-    def get_ids(cls, soup):
+    def get_html_tag(cls, soup):
         """Get tweets from html soup."""
         return [
-            cls.get_id(t)
-            for t in soup.body.findAll('li', attrs={'class': 'stream-item'})
+            t for t in soup.body.findAll('li', attrs={'class': 'stream-item'})
         ]
 
     @classmethod

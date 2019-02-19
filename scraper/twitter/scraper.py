@@ -39,11 +39,9 @@ baseurl = "https://twitter.com/search?"
 def get_tweet_ids(html_source):
     """Get all tweets from the page."""
     soup = bs(html_source, "lxml")
-    # get tweets
-    ids = Tweet.get_ids(soup)
     # and all comments for each one
-    for id_ in ids:
-        yield id_
+    for tag in Tweet.get_html_tag(soup):
+        yield Tweet.get_id(tag), Tweet.get_username(tag)
 
 
 def get_comments(url):
