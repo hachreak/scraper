@@ -134,7 +134,11 @@ class Tweet(object):
 
     @property
     def id(self):
-        return self._soup.get('data-item-id')
+        return self.get_id()
+
+    @classmethod
+    def get_id(cls, soup):
+        return soup.get('data-item-id')
 
     @property
     def time(self):
@@ -175,6 +179,14 @@ class Tweet(object):
         """Get tweets from html soup."""
         return [
             Tweet(t)
+            for t in soup.body.findAll('li', attrs={'class': 'stream-item'})
+        ]
+
+    @classmethod
+    def get_ids(cls, soup):
+        """Get tweets from html soup."""
+        return [
+            cls.get_id(t)
             for t in soup.body.findAll('li', attrs={'class': 'stream-item'})
         ]
 

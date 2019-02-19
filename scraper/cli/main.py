@@ -42,7 +42,12 @@ def twitter():
     pass
 
 
-@twitter.command()
+@twitter.group()
+def scrape():
+    pass
+
+
+@scrape.command()
 @click.argument('hashtag', callback=get_hashtag)
 @click.option('--per_driver', '-p', default=0, type=int, show_default=True,
               help="How many times scroll for each driver")
@@ -50,7 +55,7 @@ def twitter():
               help="How many times open a new driver")
 @click.option('--from-id', '-f', default=None, help="Start from this id")
 @click.option('--language', '-l', default=None, help="Filter by language")
-def scrape(hashtag, per_driver, times, from_id, language):
+def ids(hashtag, per_driver, times, from_id, language):
     """Scrape Twitter."""
     my_scraper = partial(
         tscraper.scraper, baseurl=tscraper.baseurl, per_driver=per_driver
@@ -61,14 +66,14 @@ def scrape(hashtag, per_driver, times, from_id, language):
     if language:
         query['l'] = language
 
-    for t in tscraper.scrape_more(
+    for id_ in tscraper.scrape_more(
                 query=query,
                 q=hashtag,
                 scraper=my_scraper,
                 times=times,
                 max_id=from_id
             ):
-        print(json.dumps(t._info))
+        print(id_)
 
 
 @twitter.command()

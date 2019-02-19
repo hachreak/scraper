@@ -36,17 +36,14 @@ query = {
 baseurl = "https://twitter.com/search?"
 
 
-def get_tweets(html_source):
+def get_tweet_ids(html_source):
     """Get all tweets from the page."""
     soup = bs(html_source, "lxml")
     # get tweets
-    tweets = Tweet.get_tweets(soup)
+    ids = Tweet.get_ids(soup)
     # and all comments for each one
-    for tweet in tweets:
-        if tweet._info['comments']['count'] > 0:
-            for conversation in get_comments(tweet.url):
-                tweet.add_conversation(conversation)
-        yield tweet
+    for id_ in ids:
+        yield id_
 
 
 def get_comments(url):
@@ -100,7 +97,7 @@ def scraper(query, baseurl, per_driver=10):
     with load(get_url(baseurl, query)) as driver:
         driver = scroll(driver, per_driver)
         html_source = driver.page_source
-    for t in get_tweets(html_source):
+    for t in get_tweet_ids(html_source):
         yield t
 
 
@@ -111,6 +108,6 @@ def scrape_more(query, q, scraper, times=10, max_id=None):
     for i in range(0, times):
         if max_id:
             query['q'] = ' '.join([q, 'max_id:{0}'.format(max_id)])
-        for t in scraper(query=query):
-            yield t
-            max_id = t.id
+        for id_ in scraper(query=query):
+            yield id_
+            max_id = id_
