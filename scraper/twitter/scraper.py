@@ -26,7 +26,7 @@ from selenium.common.exceptions import NoSuchElementException
 from time import sleep
 
 from ..driver import goto_end_page, load, scroll
-from .tweet import Tweet, Comment
+from .tweet import Tweet, TweetFlowFromPage, get_ancestor, TweetFromScroll
 
 
 query = {
@@ -40,22 +40,25 @@ def get_tweet_ids(html_source):
     """Get all tweets from the page."""
     soup = bs(html_source, "lxml")
     # and all comments for each one
-    for tag in Tweet.get_html_tag(soup):
-        yield Tweet.get_id(tag), Tweet.get_username(tag)
+    for tag in TweetFromScroll.get_html_tag(soup):
+        yield TweetFromScroll.get_id(tag), TweetFromScroll.get_username(tag)
 
 
-def get_comments(url):
+def get_tweets(url):
     """Get single comments of the tweet."""
     with load(url) as driver:
         # scroll page until the end
         goto_end_page(driver, IsLastComment(driver))
         soup = bs(driver.page_source, "lxml")
+        # open ancestor first
+        ancestor = get_ancestor(soup)
+        if ancestor:
+            driver.get(Tweet.get_url(ancestor.username(), ancestor.id()))
         # click on "more reply"
         more_reply(driver)
         soup = bs(driver.page_source, "lxml")
-        # for each conversation
-        for conv in Comment.conversations(soup):
-            yield [Comment(c) for c in Comment.raw_comments(conv)]
+        # return tweet
+        yield TweetFlowFromPage(soup)
 
 
 class IsLastComment(object):

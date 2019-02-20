@@ -76,6 +76,17 @@ def ids(hashtag, per_driver, times, from_id, language):
         print('{0}, {1}'.format(id_, username))
 
 
+@scrape.command()
+@click.argument('input_', type=click.File('r'))
+def hydrate(input_):
+    for value in input_:
+        id_, username = value.strip().split(', ')
+        for t in tscraper.get_tweets(
+                    tweet.TweetFromScroll.get_url(username, id_)
+                ):
+            print(json.dumps(t._info))
+
+
 @twitter.command()
 @click.argument('input_', type=click.File('r'))
 @click.option('--language', '-l', default=None, help="Filter by language")

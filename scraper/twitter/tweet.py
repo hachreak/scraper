@@ -18,11 +18,43 @@
 
 """Tweet."""
 
+import os
+
 
 video_url = 'https://twitter.com/i/videos/tweet/{0}'
+tweet_url = 'https://twitter.com/{0}/status/{1}'
+gif_url = 'https://video.twimg.com/tweet_video/{0}.mp4'
 
 
 class Tweet(object):
+
+    @classmethod
+    def get_url(cls, username, id_):
+        return tweet_url.format(username[1:], id_)
+
+
+class TweetFromScroll(Tweet):
+
+    @classmethod
+    def get_id(cls, soup):
+        return soup.get('data-item-id')
+
+    @classmethod
+    def get_username(self, soup):
+        try:
+            return soup.find('span', attrs={'class': 'username'}).text
+        except AttributeError:
+            return ''
+
+    @classmethod
+    def get_html_tag(cls, soup):
+        """Get tweets from html soup."""
+        return [
+            t for t in soup.body.findAll('li', attrs={'class': 'stream-item'})
+        ]
+
+
+class TweetFromPage(Tweet):
 
     def __init__(self, soup):
         self._soup = soup
@@ -37,20 +69,14 @@ class Tweet(object):
             'permalink': self.permalink,
             'id': self.id,
             'time': self.time,
-            'comments': {
-                'count': self.comments_count,
-                'total': 0,
-                'conversations': [],
-            },
             'video': self.video,
+            'gif': self.gif,
         }
 
     @property
-    def comments_count(self):
+    def conversations_count(self):
         try:
-            return int(self._soup.find('span', attrs={
-                'class': 'ProfileTweet-actionCountForPresentation'
-            }).text)
+            return len(self.raw_conversations)
         except ValueError:
             return 0
         except AttributeError:
@@ -75,12 +101,10 @@ class Tweet(object):
 
     @property
     def username(self):
-        return self.get_username(self._soup)
-
-    @classmethod
-    def get_username(self, soup):
         try:
-            return soup.find('span', attrs={'class': 'username'}).text
+            return self._soup.find(
+                'a', attrs={'class': 'account-group'}
+            ).find('span', attrs={'class': 'username'}).text
         except AttributeError:
             return ''
 
@@ -94,9 +118,9 @@ class Tweet(object):
     @property
     def hashtags(self):
         try:
-            links = self._soup.find('p').findAll(
-                'a', attrs={'data-query-source': 'hashtag_click'}
-            )
+            links = self._soup.find(
+                'p', attrs={'class': 'tweet-text'}
+            ).findAll('a', attrs={'data-query-source': 'hashtag_click'})
             return [a.text.strip().lower() for a in links]
         except AttributeError:
             return []
@@ -104,27 +128,31 @@ class Tweet(object):
     @property
     def likes(self):
         try:
-            return self._soup.find(
+            return int(self._soup.find(
                 'div', attrs={'class': 'ProfileTweet-action--favorite'}
             ).find(
                 'span', attrs={
                     'class': 'ProfileTweet-actionCountForPresentation'
                 }
-            ).text
+            ).text)
         except AttributeError:
+            return 0
+        except ValueError:
             return 0
 
     @property
     def retweets(self):
         try:
-            return self._soup.find(
+            return int(self._soup.find(
                 'div', attrs={'class': 'ProfileTweet-action--retweet'}
             ).find(
                 'span', attrs={
                     'class': 'ProfileTweet-actionCountForPresentation'
                 }
-            ).text
+            ).text)
         except AttributeError:
+            return 0
+        except ValueError:
             return 0
 
     @property
@@ -138,11 +166,9 @@ class Tweet(object):
 
     @property
     def id(self):
-        return self.get_id(self._soup)
-
-    @classmethod
-    def get_id(cls, soup):
-        return soup.get('data-item-id')
+        return self._soup.find(
+            'div', attrs={'class': 'tweet'}
+        ).get('data-tweet-id')
 
     @property
     def time(self):
@@ -155,13 +181,7 @@ class Tweet(object):
 
     @property
     def url(self):
-        return 'https://twitter.com/{0}/status/{1}'.format(
-            self._info['username'][1:], self._info['id']
-        )
-
-    @property
-    def comments(self):
-        return self._info['comments'].get('conversations', [])
+        return self.get_url(self._info['username'][1:], self._info['id'])
 
     @property
     def video(self):
@@ -172,11 +192,15 @@ class Tweet(object):
                 'src': video_url.format(self.id),
             }
 
-    def add_conversation(self, conversation):
-        self._info['comments']['conversations'].append([
-            c._info for c in conversation
-        ])
-        self._info['comments']['total'] += len(conversation)
+    @property
+    def gif(self):
+        if not self.video:
+            tag = self._soup.find('div', attrs={'class': 'PlayableMedia-player'})
+            if tag:
+                img = tag.get('style').split(
+                    'tweet_video_thumb/')[1].split("'")[0]
+                filename = os.path.splitext(img)[0]
+                return gif_url.format(filename)
 
     @classmethod
     def get_tweets(cls, soup):
@@ -186,12 +210,22 @@ class Tweet(object):
             for t in soup.body.findAll('li', attrs={'class': 'stream-item'})
         ]
 
-    @classmethod
-    def get_html_tag(cls, soup):
-        """Get tweets from html soup."""
-        return [
-            t for t in soup.body.findAll('li', attrs={'class': 'stream-item'})
-        ]
+
+class TweetFlowFromPage(TweetFromPage):
+
+    def __init__(self, soup):
+        super(TweetFlowFromPage, self).__init__(soup)
+        self._info['comments'] = {
+            'count': self.conversations_count,
+            'total': 0,
+            'conversations': [],
+        }
+        if self._info['comments']['count'] > 0:
+            self.add_conversations()
+
+    @property
+    def comments(self):
+        return self._info['comments'].get('conversations', [])
 
     @classmethod
     def iterate(cls, tweet_info):
@@ -202,17 +236,23 @@ class Tweet(object):
                 for conv in c:
                     yield conv
 
+    @property
+    def raw_conversations(self):
+        return self._soup.select(
+            'div.stream-container > .stream > ol.stream-items > li')
 
-class Comment(Tweet):
+    def add_conversations(self):
+        for conv in self.raw_conversations:
+            self.add_conversation([
+                Comment(c)._info for c in Comment.raw_comments(conv)
+            ])
 
-    @classmethod
-    def conversations(cls, soup):
-        """Get the all conversions."""
-        return soup.findAll(
-            'li', attrs={'class': 'ThreadedConversation--loneTweet'}
-        ) + soup.findAll(
-            'li', attrs={'class': 'ThreadedConversation'}
-        )
+    def add_conversation(self, conversation):
+        self._info['comments']['conversations'].append(conversation)
+        self._info['comments']['total'] += len(conversation)
+
+
+class Comment(TweetFromPage):
 
     @classmethod
     def raw_comments(cls, soup):
@@ -221,3 +261,21 @@ class Comment(Tweet):
     @classmethod
     def count(cls, soup):
         return len(cls.raw_comments(soup))
+
+
+def get_ancestor(soup):
+    class Ancestor(object):
+        def __init__(self, soup):
+            self._soup = soup
+
+        def username(self):
+            return self._soup.find(
+                'span', attrs={'class': 'username'}).text[1:]
+
+        def id(self):
+            return self._soup.find(
+                'div', attrs={'class': 'tweet'}).get('data-tweet-id')
+
+    anc = soup.find('div', attrs={'id': 'ancestors'})
+    if anc:
+        return Ancestor(anc)
