@@ -109,6 +109,7 @@ def scrape_more(query, q, scraper, times=10, max_id=None):
     for i in range(0, times):
         if max_id:
             query['q'] = ' '.join([q, 'max_id:{0}'.format(max_id)])
-        for id_ in scraper(query=query):
-            yield id_
+        for id_username in scraper(query=query):
+            yield id_username
+            id_, _ = id_username
             max_id = id_

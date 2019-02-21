@@ -26,6 +26,13 @@ tweet_url = 'https://twitter.com/{0}/status/{1}'
 gif_url = 'https://video.twimg.com/tweet_video/{0}.mp4'
 
 
+def iterate_tweets(tweet):
+    yield tweet
+    for conversation in tweet['comments']['conversations']:
+        for comment in conversation:
+            yield comment
+
+
 class Tweet(object):
 
     @classmethod
@@ -195,7 +202,8 @@ class TweetFromPage(Tweet):
     @property
     def gif(self):
         if not self.video:
-            tag = self._soup.find('div', attrs={'class': 'PlayableMedia-player'})
+            tag = self._soup.find(
+                'div', attrs={'class': 'PlayableMedia-player'})
             if tag:
                 img = tag.get('style').split(
                     'tweet_video_thumb/')[1].split("'")[0]

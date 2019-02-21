@@ -125,7 +125,7 @@ def stats(input_, language, percentage):
     for line in input_:
         line = json.loads(line)
         count_all_posts += 1
-        gen = tweet.Tweet.iterate(line)
+        gen = tweet.iterate_tweets(line)
         post = next(gen)
         if post['id'] not in ids:
             ids.append(post['id'])
