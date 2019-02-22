@@ -27,7 +27,7 @@ from copy import deepcopy
 from datetime import datetime
 
 from .validators import get_hashtag, get_tag
-from .. import stats as s
+from .. import stats as s, exc
 from ..twitter import scraper as tscraper, tweet
 from ..instagram import scraper as iscraper, post as ipost
 
@@ -66,14 +66,18 @@ def ids(hashtag, per_driver, times, from_id, language):
     if language:
         query['l'] = language
 
-    for id_, username in tscraper.scrape_more(
-                query=query,
-                q=hashtag,
-                scraper=my_scraper,
-                times=times,
-                max_id=from_id
-            ):
-        print('{0}, {1}'.format(id_, username))
+    try:
+        for id_, username in tscraper.scrape_more(
+                    query=query,
+                    q=hashtag,
+                    scraper=my_scraper,
+                    times=times,
+                    max_id=from_id
+                ):
+            print('{0}, {1}'.format(id_, username))
+    except exc.NoMoreItems:
+        # no more tweets available on the timetable
+        pass
 
 
 @scrape.command()
@@ -213,6 +217,21 @@ def stats(input_, language, percentage):
     for username in sorted(users, key=users.__getitem__, reverse=True)[:20]:
         print('\t{0} = {1}'.format(username, users[username]))
     print('\t...')
+
+
+@twitter.command()
+@click.argument('input_', type=click.File('r'))
+def hashtags(input_):
+    """Get the list of hashtags and number of times it appear in a tweet."""
+    hashtags = defaultdict(lambda: 0)
+    for line in input_:
+        line = json.loads(line)
+        for post in tweet.iterate_tweets(line):
+            for ht in post['hashtags']:
+                # FIXME save as lower
+                hashtags[ht.lower()] += 1
+    for ht in sorted(hashtags, key=hashtags.__getitem__, reverse=True):
+        print('{0} = {1}'.format(ht, hashtags[ht]))
 
 
 @cli.group()

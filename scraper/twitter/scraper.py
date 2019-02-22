@@ -26,6 +26,7 @@ from selenium.common.exceptions import NoSuchElementException
 from time import sleep
 
 from ..driver import goto_end_page, load, scroll
+from ..exc import NoMoreItems
 from .tweet import Tweet, TweetFlowFromPage, get_ancestor, TweetFromScroll
 
 
@@ -93,13 +94,23 @@ def get_url(baseurl, params):
     return ' '.join([baseurl + urllib.parse.urlencode(params)])
 
 
+def _has_more_items(driver):
+    try:
+        return driver.requests[-1].response.body['has_more_items']
+    except (AttributeError, IndexError, KeyError, TypeError):
+        return True
+
+
 def scraper(query, baseurl, per_driver=10):
     """Download tweets opening the twitter page, scrolling X times."""
     with load(get_url(baseurl, query)) as driver:
         driver = scroll(driver, per_driver)
         html_source = driver.page_source
+        _more_items = _has_more_items(driver)
     for t in get_tweet_ids(html_source):
         yield t
+    if not _more_items:
+        raise NoMoreItems()
 
 
 def scrape_more(query, q, scraper, times=10, max_id=None):
