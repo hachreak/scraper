@@ -211,10 +211,13 @@ class TweetFromPage(Tweet):
             tag = self._soup.find(
                 'div', attrs={'class': 'PlayableMedia-player'})
             if tag:
-                img = tag.get('style').split(
-                    'tweet_video_thumb/')[1].split("'")[0]
-                filename = os.path.splitext(img)[0]
-                return gif_url.format(filename)
+                try:
+                    img = tag.get('style').split(
+                        'tweet_video_thumb/')[1].split("'")[0]
+                    filename = os.path.splitext(img)[0]
+                    return gif_url.format(filename)
+                except IndexError:
+                    pass
 
     @classmethod
     def get_tweets(cls, soup):
