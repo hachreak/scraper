@@ -40,10 +40,11 @@ def goto_end_page(driver, is_ended):
 
 
 class load(object):
-    def __init__(self, url):
+    def __init__(self, url=None):
         self.driver = webdriver.Firefox()
-        self.driver.base_url = url
-        self.driver.get(self.driver.base_url)
+        if url:
+            self.driver.base_url = url
+            self.driver.get(self.driver.base_url)
         self.driver.implicitly_wait(2)
 
     def __enter__(self):

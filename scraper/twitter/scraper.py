@@ -45,22 +45,22 @@ def get_tweet_ids(html_source):
         yield TweetFromScroll.get_id(tag), TweetFromScroll.get_username(tag)
 
 
-def get_tweets(url):
+def get_tweets(driver, url):
     """Get single comments of the tweet."""
-    with load(url) as driver:
-        # scroll page until the end
-        goto_end_page(driver, IsLastComment(driver))
-        soup = bs(driver.page_source, "lxml")
-        # open ancestor first
-        ancestor = get_ancestor(soup)
-        if ancestor:
-            driver.get(Tweet.get_url(ancestor.username(), ancestor.id()))
-        # click on "more reply"
-        more_reply(driver)
-        soup = bs(driver.page_source, "lxml")
-        # return tweet
-        result = TweetFlowFromPage(soup)
-    return result
+    # open the page
+    driver.get(url)
+    # scroll page until the end
+    goto_end_page(driver, IsLastComment(driver))
+    soup = bs(driver.page_source, "lxml")
+    # open ancestor first
+    ancestor = get_ancestor(soup)
+    if ancestor:
+        driver.get(Tweet.get_url(ancestor.username(), ancestor.id()))
+    # click on "more reply"
+    more_reply(driver)
+    soup = bs(driver.page_source, "lxml")
+    # return tweet
+    return TweetFlowFromPage(soup)
 
 
 class IsLastComment(object):

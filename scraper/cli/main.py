@@ -27,7 +27,7 @@ from copy import deepcopy
 from datetime import datetime
 
 from .validators import get_hashtag, get_tag
-from .. import stats as s, exc
+from .. import stats as s, exc, driver as drv
 from ..twitter import scraper as tscraper, tweet
 from ..instagram import scraper as iscraper, post as ipost
 
@@ -83,16 +83,18 @@ def ids(hashtag, per_driver, times, from_id, language):
 @scrape.command()
 @click.argument('input_', type=click.File('r'))
 def hydrate(input_):
-    for value in input_:
-        id_, username = value.strip().split(', ')
-        try:
-            t = tscraper.get_tweets(
-                tweet.TweetFromScroll.get_url(username, id_)
-            )
-            print(json.dumps(t._info))
-        except exc.UnknowObject:
-            # if something went wrong loading page, skip
-            pass
+    with drv.load() as driver:
+        for value in input_:
+            id_, username = value.strip().split(', ')
+            try:
+                t = tscraper.get_tweets(
+                    driver,
+                    tweet.TweetFromScroll.get_url(username, id_)
+                )
+                print(json.dumps(t._info))
+            except exc.UnknowObject:
+                # if something went wrong loading page, skip
+                pass
 
 
 @twitter.command()
