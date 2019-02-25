@@ -59,7 +59,8 @@ def get_tweets(url):
         more_reply(driver)
         soup = bs(driver.page_source, "lxml")
         # return tweet
-        yield TweetFlowFromPage(soup)
+        result = TweetFlowFromPage(soup)
+    return result
 
 
 class IsLastComment(object):

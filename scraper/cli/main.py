@@ -85,10 +85,14 @@ def ids(hashtag, per_driver, times, from_id, language):
 def hydrate(input_):
     for value in input_:
         id_, username = value.strip().split(', ')
-        for t in tscraper.get_tweets(
-                    tweet.TweetFromScroll.get_url(username, id_)
-                ):
+        try:
+            t = tscraper.get_tweets(
+                tweet.TweetFromScroll.get_url(username, id_)
+            )
             print(json.dumps(t._info))
+        except exc.UnknowObject:
+            # if something went wrong loading page, skip
+            pass
 
 
 @twitter.command()

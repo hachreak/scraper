@@ -21,6 +21,9 @@
 import os
 
 
+from ..exc import UnknowObject
+
+
 video_url = 'https://twitter.com/i/videos/tweet/{0}'
 tweet_url = 'https://twitter.com/{0}/status/{1}'
 gif_url = 'https://video.twimg.com/tweet_video/{0}.mp4'
@@ -173,9 +176,12 @@ class TweetFromPage(Tweet):
 
     @property
     def id(self):
-        return self._soup.find(
-            'div', attrs={'class': 'tweet'}
-        ).get('data-tweet-id')
+        try:
+            return self._soup.find(
+                'div', attrs={'class': 'tweet'}
+            ).get('data-tweet-id')
+        except AttributeError:
+            raise UnknowObject()
 
     @property
     def time(self):
