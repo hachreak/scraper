@@ -45,20 +45,20 @@ def get_tweet_ids(html_source):
         yield TweetFromScroll.get_id(tag), TweetFromScroll.get_username(tag)
 
 
-def get_tweets(driver, url):
+def get_tweets(loader, url):
     """Get single comments of the tweet."""
     # open the page
-    driver.get(url)
+    loader.get(url)
     # scroll page until the end
-    goto_end_page(driver, IsLastComment(driver))
-    soup = bs(driver.page_source, "lxml")
+    goto_end_page(loader.driver, IsLastComment(loader.driver))
+    soup = bs(loader.driver.page_source, "lxml")
     # open ancestor first
     ancestor = get_ancestor(soup)
     if ancestor:
-        driver.get(Tweet.get_url(ancestor.username(), ancestor.id()))
+        loader.driver.get(Tweet.get_url(ancestor.username(), ancestor.id()))
     # click on "more reply"
-    more_reply(driver)
-    soup = bs(driver.page_source, "lxml")
+    more_reply(loader.driver)
+    soup = bs(loader.driver.page_source, "lxml")
     # return tweet
     return TweetFlowFromPage(soup)
 
@@ -104,10 +104,10 @@ def _has_more_items(driver):
 
 def scraper(query, baseurl, per_driver=10):
     """Download tweets opening the twitter page, scrolling X times."""
-    with load(get_url(baseurl, query)) as driver:
-        driver = scroll(driver, per_driver)
-        html_source = driver.page_source
-        _more_items = _has_more_items(driver)
+    with load(get_url(baseurl, query)) as loader:
+        loader.driver = scroll(loader.driver, per_driver)
+        html_source = loader.driver.page_source
+        _more_items = _has_more_items(loader.driver)
     for t in get_tweet_ids(html_source):
         yield t
     if not _more_items:

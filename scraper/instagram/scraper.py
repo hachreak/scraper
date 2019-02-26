@@ -90,18 +90,18 @@ def try_again(fun, exc=StaleElementReferenceException, times=5):
 
 
 def _get_more_comments(url):
-    with drv.load(url) as driver:
+    with drv.load(url) as loader:
         query = 'query_hash={0}'.format(query_hash)
         get_more = True
         while get_more:
-            link = _get_link_more_comments(driver)
+            link = _get_link_more_comments(loader.driver)
             get_more = link is not None
             if link:
                 try_again(lambda: link.send_keys(Keys.ENTER))
         list_of_list = [
             r.response.body['data']['shortcode_media'][
                 'edge_media_to_comment']['edges']
-            for r in driver.requests if query in r.path and r.response]
+            for r in loader.driver.requests if query in r.path and r.response]
         return list(itertools.chain(*list_of_list))
 
 

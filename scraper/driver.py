@@ -40,7 +40,9 @@ def goto_end_page(driver, is_ended):
 
 
 class load(object):
-    def __init__(self, url=None):
+    def __init__(self, url=None, reload_every=1000):
+        self._reload_every = reload_every
+        self._count_opened_urls = 0
         self.driver = webdriver.Firefox()
         if url:
             self.driver.base_url = url
@@ -48,7 +50,24 @@ class load(object):
         self.driver.implicitly_wait(2)
 
     def __enter__(self):
-        return self.driver
+        return self
 
     def __exit__(self, type, value, traceback):
         self.driver.quit()
+
+    def get(self, url):
+        if self._need_reload():
+            self.driver.quit()
+            self.driver = webdriver.Firefox()
+        self.driver.base_url = url
+        self.driver.get(self.driver.base_url)
+
+    def _need_reload(self):
+        # update internal counter
+        self._count_opened_urls += 1
+        # check if need a reset
+        need = self._count_opened_urls > self._reload_every
+        # if need reset, then reset also the counter
+        if need:
+            self._count_opened_urls = 0
+        return need

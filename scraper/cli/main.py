@@ -82,13 +82,15 @@ def ids(hashtag, per_driver, times, from_id, language):
 
 @scrape.command()
 @click.argument('input_', type=click.File('r'))
-def hydrate(input_):
-    with drv.load() as driver:
+@click.option('--reload-every', '-r', default=1000, type=int,
+              help="Reload selenium browser every X times.")
+def hydrate(input_, reload_every):
+    with drv.load(reload_every=reload_every) as loader:
         for value in input_:
             id_, username = value.strip().split(', ')
             try:
                 t = tscraper.get_tweets(
-                    driver,
+                    loader,
                     tweet.TweetFromScroll.get_url(username, id_)
                 )
                 print(json.dumps(t._info))
