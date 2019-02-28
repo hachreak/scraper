@@ -21,11 +21,9 @@
 import requests
 import itertools
 
-from time import sleep
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import StaleElementReferenceException
 
-from .. import driver as drv
+from .. import driver as drv, utils
 
 
 url_search = 'https://www.instagram.com/explore/tags/{0}/'
@@ -81,14 +79,6 @@ def _get_comments(media):
     return media
 
 
-def try_again(fun, exc=StaleElementReferenceException, times=5):
-    for _ in range(times):
-        try:
-            return fun()
-        except exc:
-            sleep(1)
-
-
 def _get_more_comments(url):
     with drv.load(url) as loader:
         query = 'query_hash={0}'.format(query_hash)
@@ -97,7 +87,7 @@ def _get_more_comments(url):
             link = _get_link_more_comments(loader.driver)
             get_more = link is not None
             if link:
-                try_again(lambda: link.send_keys(Keys.ENTER))
+                utils.try_again(lambda: link.send_keys(Keys.ENTER))
         list_of_list = [
             r.response.body['data']['shortcode_media'][
                 'edge_media_to_comment']['edges']
@@ -106,7 +96,7 @@ def _get_more_comments(url):
 
 
 def _get_link_more_comments(driver):
-    els = try_again(
+    els = utils.try_again(
         lambda: [el for el in driver.find_elements_by_tag_name('button')
                  if 'comments' in el.text]
     ) or []

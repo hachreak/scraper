@@ -22,9 +22,11 @@ import urllib
 
 from bs4 import BeautifulSoup as bs
 from copy import deepcopy
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, \
+        WebDriverException, StaleElementReferenceException
 from time import sleep
 
+from .. import utils
 from ..driver import goto_end_page, load, scroll
 from ..exc import NoMoreItems
 from .tweet import Tweet, TweetFlowFromPage, get_ancestor, TweetFromScroll
@@ -50,14 +52,20 @@ def get_tweets(loader, url):
     # open the page
     loader.get(url)
     # scroll page until the end
-    goto_end_page(loader.driver, IsLastComment(loader.driver))
+    utils.try_again(
+        lambda: goto_end_page(loader.driver, IsLastComment(loader.driver)),
+        WebDriverException
+    )
     soup = bs(loader.driver.page_source, "lxml")
     # open ancestor first
     ancestor = get_ancestor(soup)
     if ancestor:
         loader.driver.get(Tweet.get_url(ancestor.username(), ancestor.id()))
     # click on "more reply"
-    more_reply(loader.driver)
+    utils.try_again(
+        lambda: more_reply(loader.driver),
+        StaleElementReferenceException
+    )
     soup = bs(loader.driver.page_source, "lxml")
     # return tweet
     return TweetFlowFromPage(soup)

@@ -216,7 +216,7 @@ class TweetFromPage(Tweet):
                         'tweet_video_thumb/')[1].split("'")[0]
                     filename = os.path.splitext(img)[0]
                     return gif_url.format(filename)
-                except IndexError:
+                except (IndexError, AttributeError):
                     pass
 
     @classmethod
