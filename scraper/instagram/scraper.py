@@ -22,6 +22,7 @@ import requests
 import itertools
 
 from selenium.webdriver.common.keys import Keys
+from requests.exceptions import RequestException
 
 from .. import driver as drv, utils
 
@@ -47,7 +48,10 @@ def scrape_ids(url, times=1, end_cursor=None):
     while True:
         if end_cursor:
             params['max_id'] = end_cursor
-        media = utils.try_again(lambda: _get_media(url, params), KeyError)
+        media = utils.try_again(
+            lambda: _get_media(url, params),
+            (KeyError, RequestException)
+        )
         if media:
             for r in media['edges']:
                 yield r['node']['shortcode']
