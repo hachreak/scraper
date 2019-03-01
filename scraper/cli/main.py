@@ -247,18 +247,23 @@ def instagram():
     pass
 
 
-@instagram.command('scrape')
+@instagram.group('scrape')
+def instagram_scrape():
+    pass
+
+
+@instagram_scrape.command('ids')
 @click.argument('hashtag', callback=get_tag)
 @click.option('--times', '-t', default=1, type=int, show_default=True,
               help="How many times call the API")
 @click.option('--from-id', '-f', default=None, help="Start from this id")
-def instagram_scrape(hashtag, times, from_id):
+def instagram_ids(hashtag, times, from_id):
     """Scrape Instagram."""
-    scraper = iscraper.scrape(
+    scraper = iscraper.scrape_ids(
         iscraper.url_search.format(hashtag), times=times, end_cursor=from_id
     )
     for post in scraper:
-        print(json.dumps(post))
+        print(post)
 
 
 @instagram.command('stats')

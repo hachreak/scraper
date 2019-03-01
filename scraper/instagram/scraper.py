@@ -36,17 +36,28 @@ query_comments = {
 url_query = 'https://www.instagram.com/graphql/query/'
 
 
-def scrape(url, times=1, end_cursor=None):
+def scrape_ids(url, times=1, end_cursor=None):
+    def _get_media(url, params):
+        res = requests.get(url, params=params).json()
+        return res['graphql']['hashtag']['edge_hashtag_to_media']
+
     params = {'__a': 1}
-    for i in range(times):
+    has_next_page = True
+    #  for i in range(times):
+    while True:
         if end_cursor:
             params['max_id'] = end_cursor
-        res = requests.get(url, params=params).json()
-        media = res['graphql']['hashtag']['edge_hashtag_to_media']
-        for r in media['edges']:
-            r['_end_cursor'] = media['page_info']['end_cursor']
-            yield _get_comments(r)
-        end_cursor = media['page_info']['end_cursor']
+        media = utils.try_again(lambda: _get_media(url, params), KeyError)
+        if media:
+            for r in media['edges']:
+                yield r['node']['shortcode']
+                #  r['_end_cursor'] = media['page_info']['end_cursor']
+                #  yield _get_comments(r)
+            has_next_page = media['page_info']['has_next_page']
+            if not has_next_page:
+                # no more posts available
+                return
+            end_cursor = media['page_info']['end_cursor']
 
 
 def _get_comments(media):
