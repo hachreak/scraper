@@ -21,6 +21,7 @@
 import requests
 import itertools
 
+from json.decoder import JSONDecodeError
 from selenium.webdriver.common.keys import Keys
 from requests.exceptions import RequestException
 
@@ -50,7 +51,7 @@ def scrape_ids(url, times=1, end_cursor=None):
             params['max_id'] = end_cursor
         media = utils.try_again(
             lambda: _get_media(url, params),
-            (KeyError, RequestException)
+            (KeyError, RequestException, JSONDecodeError)
         )
         if media:
             for r in media['edges']:

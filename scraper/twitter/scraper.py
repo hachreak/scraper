@@ -25,6 +25,7 @@ from copy import deepcopy
 from selenium.common.exceptions import NoSuchElementException, \
         WebDriverException, StaleElementReferenceException
 from time import sleep
+from seleniumwire.proxy.client import ProxyException
 
 from .. import utils
 from ..driver import goto_end_page, load, scroll
@@ -115,7 +116,10 @@ def scraper(query, baseurl, per_driver=10):
     with load(get_url(baseurl, query)) as loader:
         loader.driver = scroll(loader.driver, per_driver)
         html_source = loader.driver.page_source
-        _more_items = _has_more_items(loader.driver)
+        _more_items = utils.try_again(
+            lambda: _has_more_items(loader.driver),
+            ProxyException
+        )
     for t in get_tweet_ids(html_source):
         yield t
     if not _more_items:
