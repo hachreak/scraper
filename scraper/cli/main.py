@@ -262,8 +262,24 @@ def instagram_ids(hashtag, times, from_id):
     scraper = iscraper.scrape_ids(
         iscraper.url_search.format(hashtag), times=times, end_cursor=from_id
     )
-    for post in scraper:
-        print(post)
+    for shortcode in scraper:
+        print(shortcode)
+
+
+@instagram_scrape.command('hydrate')
+@click.argument('input_', type=click.File('r'))
+@click.option('--reload-every', '-r', default=20, type=int,
+              help="Reload selenium browser every X times.")
+def instagram_hydrate(input_, reload_every):
+    #  with drv.load(reload_every=reload_every) as loader:
+    for value in input_:
+        try:
+            result = iscraper.get_comments(value.strip())
+            if result:
+                print(json.dumps(result))
+        except exc.UnknowObject:
+            # if something went wrong loading page, skip
+            pass
 
 
 @instagram.command('stats')

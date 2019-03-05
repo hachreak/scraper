@@ -65,34 +65,33 @@ def scrape_ids(url, times=1, end_cursor=None):
             end_cursor = media['page_info']['end_cursor']
 
 
-def _get_comments(media):
+def get_comments(shortcode):
     """Get more info about this specific media post."""
     params = {'__a': 1}
-    if 'shortcode' in media.get('node', {}).keys():
-        # get post page
-        res = requests.get(
-            url_post.format(media['node']['shortcode']),
-            params=params
-        )
-        if res.status_code == requests.codes.ok:
-            media['_post'] = res.json()
-            comments = media['_post']['graphql']['shortcode_media'][
-                'edge_media_to_comment']['edges']
-            shmedia = media['_post']['graphql']['shortcode_media']
-            info = shmedia['edge_media_to_comment']['page_info']
-            # check if there are more comments
-            if info['has_next_page']:
-                shortcode = media['_post']['graphql'][
-                    'shortcode_media']['shortcode']
-                # get all other comments
-                comments.extend(
-                    _get_more_comments(url_post.format(shortcode))
-                )
-                # sort comments
-                sorted(comments, key=lambda x: x['node']['created_at'])
-                media['_post']['graphql']['shortcode_media'][
-                    'edge_media_to_comment']['edges'] = comments
-    return media
+    # get post page
+    res = utils.try_again(
+        lambda: requests.get(url_post.format(shortcode), params=params),
+        RequestException
+    )
+    if res.status_code == requests.codes.ok:
+        _post = res.json()
+        comments = _post['graphql']['shortcode_media'][
+            'edge_media_to_comment']['edges']
+        shmedia = _post['graphql']['shortcode_media']
+        info = shmedia['edge_media_to_comment']['page_info']
+        # check if there are more comments
+        if info['has_next_page']:
+            shortcode = _post['graphql'][
+                'shortcode_media']['shortcode']
+            # get all other comments
+            comments.extend(
+                _get_more_comments(url_post.format(shortcode))
+            )
+            # sort comments
+            sorted(comments, key=lambda x: x['node']['created_at'])
+            _post['graphql']['shortcode_media'][
+                'edge_media_to_comment']['edges'] = comments
+        return _post
 
 
 def _get_more_comments(url):
