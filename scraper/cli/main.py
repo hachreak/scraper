@@ -268,10 +268,7 @@ def instagram_ids(hashtag, times, from_id):
 
 @instagram_scrape.command('hydrate')
 @click.argument('input_', type=click.File('r'))
-@click.option('--reload-every', '-r', default=20, type=int,
-              help="Reload selenium browser every X times.")
-def instagram_hydrate(input_, reload_every):
-    #  with drv.load(reload_every=reload_every) as loader:
+def instagram_hydrate(input_):
     for value in input_:
         try:
             result = iscraper.get_comments(value.strip())
