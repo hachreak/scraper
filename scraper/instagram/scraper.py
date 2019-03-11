@@ -25,7 +25,7 @@ from json.decoder import JSONDecodeError
 from selenium.webdriver.common.keys import Keys
 from requests.exceptions import RequestException
 
-from .. import driver as drv, utils
+from .. import utils
 
 
 url_search = 'https://www.instagram.com/explore/tags/{0}/'
@@ -65,7 +65,7 @@ def scrape_ids(url, times=1, end_cursor=None):
             end_cursor = media['page_info']['end_cursor']
 
 
-def get_comments(shortcode):
+def get_comments(shortcode, loader):
     """Get more info about this specific media post."""
     params = {'__a': 1}
     # get post page
@@ -85,7 +85,7 @@ def get_comments(shortcode):
                 'shortcode_media']['shortcode']
             # get all other comments
             comments.extend(
-                _get_more_comments(url_post.format(shortcode))
+                _get_more_comments(url_post.format(shortcode), loader=loader)
             )
             # sort comments
             sorted(comments, key=lambda x: x['node']['created_at'])
@@ -94,20 +94,19 @@ def get_comments(shortcode):
         return _post
 
 
-def _get_more_comments(url):
-    with drv.load(url) as loader:
-        query = 'query_hash={0}'.format(query_hash)
-        get_more = True
-        while get_more:
-            link = _get_link_more_comments(loader.driver)
-            get_more = link is not None
-            if link:
-                utils.try_again(lambda: link.send_keys(Keys.ENTER))
-        list_of_list = [
-            r.response.body['data']['shortcode_media'][
-                'edge_media_to_comment']['edges']
-            for r in loader.driver.requests if query in r.path and r.response]
-        return list(itertools.chain(*list_of_list))
+def _get_more_comments(url, loader):
+    query = 'query_hash={0}'.format(query_hash)
+    get_more = True
+    while get_more:
+        link = _get_link_more_comments(loader.driver)
+        get_more = link is not None
+        if link:
+            utils.try_again(lambda: link.send_keys(Keys.ENTER))
+    list_of_list = [
+        r.response.body['data']['shortcode_media'][
+            'edge_media_to_comment']['edges']
+        for r in loader.driver.requests if query in r.path and r.response]
+    return list(itertools.chain(*list_of_list))
 
 
 def _get_link_more_comments(driver):
