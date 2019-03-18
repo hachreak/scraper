@@ -282,6 +282,37 @@ def instagram_hydrate(input_, reload_every):
                 pass
 
 
+@instagram_scrape.group('hydrated')
+def instagram_hydrated():
+    """Operation on hydrated data."""
+    pass
+
+
+@instagram_hydrated.command()
+@click.argument('input_', type=click.File('r'))
+def get_ids(input_):
+    """Get shortcode from hydrated data."""
+    for line in input_:
+        try:
+            line = json.loads(line)
+            print(line['graphql']['shortcode_media']['shortcode'])
+        except json.decoder.JSONDecodeError:
+            pass
+
+
+@instagram_hydrated.command()
+@click.argument('input_', type=click.File('r'))
+def get_imgs(input_):
+    """Get image links from hydrated data."""
+    for line in input_:
+        try:
+            line = json.loads(line)
+            print(line['graphql'][
+                'shortcode_media']['display_resources'][-1]['src'])
+        except json.decoder.JSONDecodeError:
+            pass
+
+
 @instagram.command('stats')
 @click.argument('input_', type=click.File('r'))
 @click.option('--language', '-l', default=None, help="Filter by language")
