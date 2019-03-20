@@ -77,7 +77,7 @@ def get_comments(shortcode, loader):
     # get post page
     _post = utils.try_again(
         lambda: _get_request_json(url_post.format(shortcode), params),
-        RequestException, JSONDecodeError
+        (RequestException, JSONDecodeError)
     )
     comments = _post['graphql']['shortcode_media'][
         'edge_media_to_comment']['edges']
