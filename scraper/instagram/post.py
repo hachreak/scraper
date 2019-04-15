@@ -27,12 +27,18 @@ class Post(object):
             "image": self.imgs,
             "likes": self.likes,
             "time": self.time,
-            "username": self.owner['username'],
+            "username": self._username(self.owner),
             "owner": self.owner,
             "video": self.video,
             "hashtags": self.hashtags,
             "location": self.location,
         }
+
+    def _username(self, owner):
+        try:
+            return owner['username']
+        except KeyError:
+            return owner['id']
 
     @property
     def comments(self):
@@ -59,13 +65,24 @@ class Post(object):
             return self._raw['_post']['graphql']['shortcode_media'][
                     'shortcode']
         except KeyError:
+            pass
+        try:
+            return self._raw['node']['shortcode']
+        except KeyError:
+            pass
+        try:
+            return self._raw['graphql']['shortcode_media']['shortcode']
+        except KeyError:
             raise DeletedPost()
 
     @property
     def imgs(self):
-        list_imgs = self._raw['node']['thumbnail_resources'] + \
-                self._raw['_post']['graphql']['shortcode_media'][
-                        'display_resources']
+        list_imgs = self._raw.get('node', {}).get(
+                'thumbnail_resources', []) + \
+            self._raw.get('_post', {}).get('graphql', {}).get(
+                    'shortcode_media', {}).get('display_resources', []) + \
+            self._raw.get('graphql', {}).get(
+                    'shortcode_media', {}).get('display_resources', [])
 
         imgs = {}
         for i in list_imgs:
@@ -75,21 +92,47 @@ class Post(object):
 
     @property
     def likes(self):
-        return self._raw['_post']['graphql']['shortcode_media'][
-            'edge_media_preview_like']['count']
+        try:
+            return self._raw['_post']['graphql']['shortcode_media'][
+                'edge_media_preview_like']['count']
+        except KeyError:
+            pass
+        try:
+            return self._raw['graphql']['shortcode_media'][
+                    'edge_media_preview_like']['count']
+        except KeyError:
+            pass
+        return self._raw['node']['edge_media_preview_like']['count']
 
     @property
     def time(self):
-        return self._raw['_post']['graphql']['shortcode_media'][
-            'taken_at_timestamp']
+        try:
+            return self._raw['_post']['graphql']['shortcode_media'][
+                'taken_at_timestamp']
+        except KeyError:
+            pass
+        try:
+            return self._raw['graphql']['shortcode_media'][
+                'taken_at_timestamp']
+        except KeyError:
+            pass
+        return self._raw['node']['taken_at_timestamp']
 
     @property
     def owner(self):
-        return self._raw['_post']['graphql']['shortcode_media']['owner']
+        try:
+            return self._raw['_post']['graphql']['shortcode_media']['owner']
+        except KeyError:
+            pass
+        try:
+            return self._raw['graphql']['shortcode_media']['owner']
+        except KeyError:
+            pass
+        return self._raw['node']['owner']
 
     @property
     def video(self):
-        sh = self._raw['_post']['graphql']['shortcode_media']
+        sh = self._get_media()
         if sh['is_video']:
             return {
                 'views': sh['video_view_count'],
@@ -106,9 +149,30 @@ class Post(object):
 
     @property
     def location(self):
-        sh = self._raw['_post']['graphql']['shortcode_media']
-        if sh['location']:
-            sh['location']['address_json'] = json.loads(
-                    sh['location'].get('address_json') or '{}'
-            )
-        return sh['location']
+        sh = self._get_media()
+        try:
+            if sh['location']:
+                sh['location']['address_json'] = json.loads(
+                        sh['location'].get('address_json') or '{}'
+                )
+            return sh['location']
+        except KeyError:
+            return {}
+
+    def _get_media(self):
+        sh = None
+        try:
+            sh = self._raw['_post']['graphql']['shortcode_media']
+        except KeyError:
+            pass
+        if sh is None:
+            try:
+                sh = self._raw['graphql']['shortcode_media']
+            except KeyError:
+                pass
+        if sh is None:
+            try:
+                sh = self._raw['node']
+            except KeyError:
+                pass
+        return sh

@@ -369,8 +369,10 @@ def instagram_stats(input_, language, percentage):
                         locations[post['location']['slug']] += 1
             ids.append(post['id'])
         except ipost.DeletedPost:
+            print("post error..")
             pass
         except json.decoder.JSONDecodeError:
+            print("json error..")
             pass
 
     if language:
