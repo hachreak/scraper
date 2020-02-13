@@ -8,8 +8,9 @@ from collections import defaultdict
 from datetime import datetime
 
 from .. import stats as s, exc, driver as drv
-from ..instagram import scraper, post
+from ..instagram import scraper, post, label_studio as ls
 from .validators import get_tag
+from .utils import count_lines
 
 
 @click.group()
@@ -177,3 +178,21 @@ def stats(input_, language, percentage):
             locations, key=locations.__getitem__, reverse=True)[:20]:
         print('\t{0} = {1}'.format(slug, locations[slug]))
     print('\t...')
+
+
+@instagram.group()
+def convert():
+    pass
+
+
+@convert.command()
+@click.argument('src', type=click.File('r'))
+@click.argument('dst', type=click.File('w'))
+def label_studio(src, dst):
+    out = []
+    with click.progressbar(src, length=count_lines(src.name)) as bar:
+        for line in bar:
+            out.extend(ls.format_instagram_label_studio(
+                post.Post(json.loads(line))
+            ))
+    json.dump(out, dst)

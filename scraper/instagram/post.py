@@ -16,6 +16,7 @@ class Post(object):
     def __init__(self, raw):
         """Init."""
         self._raw = deepcopy(raw)
+        self._raw = self._raw.get('_post', self._raw)
 
         self._info = {
             "comments": {
@@ -43,7 +44,7 @@ class Post(object):
     @property
     def comments(self):
         try:
-            return [c['node'] for c in self._raw['_post']['graphql'][
+            return [c['node'] for c in self._raw['graphql'][
                 'shortcode_media']['edge_media_to_comment']['edges']]
         except KeyError:
             return []
@@ -89,6 +90,10 @@ class Post(object):
             imgs['{0}x{1}'.format(i['config_width'], i['config_height'])] = \
                     i['src']
         return imgs
+
+    @property
+    def img_name(self):
+        return list(self.imgs.values())[0].split('/')[-1]
 
     @property
     def likes(self):
