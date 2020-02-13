@@ -17,17 +17,17 @@ def instagram():
     pass
 
 
-@instagram.group('scrape')
-def instagram_scrape():
+@instagram.group()
+def scrape():
     pass
 
 
-@instagram_scrape.command('ids')
+@scrape.command()
 @click.argument('hashtag', callback=get_tag)
 @click.option('--times', '-t', default=1, type=int, show_default=True,
               help="How many times call the API")
 @click.option('--from-id', '-f', default=None, help="Start from this id")
-def instagram_ids(hashtag, times, from_id):
+def ids(hashtag, times, from_id):
     """Scrape Instagram."""
     ids_scraped = scraper.scrape_ids(
         scraper.url_search.format(hashtag), times=times, end_cursor=from_id
@@ -36,11 +36,11 @@ def instagram_ids(hashtag, times, from_id):
         print(shortcode)
 
 
-@instagram_scrape.command('hydrate')
+@scrape.command()
 @click.argument('input_', type=click.File('r'))
 @click.option('--reload-every', '-r', default=20, type=int,
               help="Reload selenium browser every X times.")
-def instagram_hydrate(input_, reload_every):
+def hydrate(input_, reload_every):
     with drv.load(reload_every=reload_every) as loader:
         for value in input_:
             try:
@@ -52,13 +52,13 @@ def instagram_hydrate(input_, reload_every):
                 pass
 
 
-@instagram_scrape.group('hydrated')
-def instagram_hydrated():
+@scrape.group()
+def hydrated():
     """Operation on hydrated data."""
     pass
 
 
-@instagram_hydrated.command()
+@hydrated.command()
 @click.argument('input_', type=click.File('r'))
 def get_ids(input_):
     """Get shortcode from hydrated data."""
@@ -70,7 +70,7 @@ def get_ids(input_):
             pass
 
 
-@instagram_hydrated.command()
+@hydrated.command()
 @click.argument('input_', type=click.File('r'))
 def get_imgs(input_):
     """Get image links from hydrated data."""
@@ -83,12 +83,12 @@ def get_imgs(input_):
             pass
 
 
-@instagram.command('stats')
+@instagram.command()
 @click.argument('input_', type=click.File('r'))
 @click.option('--language', '-l', default=None, help="Filter by language")
 @click.option('--percentage', '-p', default=0.5,
               help="Percentage of X words to be considered X")
-def instagram_stats(input_, language, percentage):
+def stats(input_, language, percentage):
     """Show some statistics about the posts."""
     if language:
         is_lang = s.is_of_lang(
