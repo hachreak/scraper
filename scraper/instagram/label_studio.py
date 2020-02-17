@@ -1,12 +1,16 @@
 
 """Label Studio utils."""
 
+import os
 
-def format_instagram_label_studio(page):
-    for comment in page.comments:
-        yield {
-            'data': {
-                'image': page.img_name,
-                'text': comment['text'],
+
+def format(base_dir):
+    def f(page):
+        for comment in page.comments:
+            yield {
+                'data': {
+                    'image': os.path.join(base_dir, page.img_name),
+                    'text': comment['text'],
+                }
             }
-        }
+    return f

@@ -189,21 +189,22 @@ def convert():
 @convert.command()
 @click.argument('src', type=click.File('r'))
 @click.argument('dst', type=click.Path(exists=True, readable=True))
-@click.option('--start-from', '-s', type=int, default=0)
-@click.option('--pattern', '-p', default='output-{index:08d}.json')
-@click.option('--max-per-file', '-m', type=int, default=-1)
-def label_studio(src, dst, start_from, pattern, max_per_file):
+@click.option('--start-from', '-s', type=int, default=0, show_default=True)
+@click.option('--pattern', '-p', default='output-{index:08d}.json',
+              show_default=True)
+@click.option('--max-per-file', '-m', type=int, default=-1, show_default=True)
+@click.option('--base-path', '-b', default='.', show_default=True)
+def label_studio(src, dst, start_from, pattern, max_per_file, base_path):
     def save(dst, pattern, start_from):
         filename = os.path.join(dst, pattern.format(index=start_from))
         with open(filename, 'w') as f:
             json.dump(out, f)
 
     out = []
+    format_ = ls.format(base_path)
     with click.progressbar(src, length=count_lines(src.name)) as bar:
         for line in bar:
-            out.extend(ls.format_instagram_label_studio(
-                post.Post(json.loads(line))
-            ))
+            out.extend(format_(post.Post(json.loads(line))))
             if max_per_file != -1 and len(out) >= max_per_file:
                 save(dst, pattern, start_from)
                 out = []
