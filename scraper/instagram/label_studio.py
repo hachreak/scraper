@@ -9,6 +9,8 @@ def format(base_dir):
         for comment in page.comments:
             yield {
                 'data': {
+                    'post_id': page.id,
+                    'comment_id': comment['id'],
                     'image': os.path.join(base_dir, page.img_name),
                     'text': comment['text'],
                 }
