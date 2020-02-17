@@ -10,8 +10,9 @@ from datetime import datetime
 
 from .. import stats as s, exc, driver as drv
 from ..instagram import scraper, post, label_studio as ls
+from ..utils import count_lines, load_json
+from ..label_studio import completitions_to_asc, alias_to_label
 from .validators import get_tag
-from .utils import count_lines
 
 
 @click.group()
@@ -194,7 +195,9 @@ def convert():
               show_default=True)
 @click.option('--max-per-file', '-m', type=int, default=-1, show_default=True)
 @click.option('--base-path', '-b', default='.', show_default=True)
-def label_studio(src, dst, start_from, pattern, max_per_file, base_path):
+def scraper_to_label_studio(src, dst, start_from, pattern, max_per_file,
+                            base_path):
+    """Convert scraper hydratated posts to label-studio import files."""
     def save(dst, pattern, start_from):
         filename = os.path.join(dst, pattern.format(index=start_from))
         with open(filename, 'w') as f:
@@ -211,3 +214,13 @@ def label_studio(src, dst, start_from, pattern, max_per_file, base_path):
                 start_from += 1
     if len(out) > 0:
         save(dst, pattern, start_from)
+
+
+@convert.command()
+@click.argument('src', type=click.Path(exists=True, readable=True))
+def label_studio_to_asc(src):
+    """Convert label-studio json completions to dataset."""
+    config = load_json(src)
+    a2l = alias_to_label(config['label_config'])
+    dataset = dict(completitions_to_asc(config['output_dir'], a2l))
+    print(json.dumps(dataset))
