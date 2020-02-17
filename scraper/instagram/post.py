@@ -93,7 +93,7 @@ class Post(object):
 
     @property
     def img_name(self):
-        return list(self.imgs.values())[0].split('/')[-1]
+        return list(self.imgs.values())[0].split('/')[-1].split('?')[0]
 
     @property
     def likes(self):
