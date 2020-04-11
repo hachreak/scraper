@@ -12,11 +12,20 @@ from ....utils import count_lines, load_json
 
 @click.group()
 def asc():
+    """Aspect Sentiment Classification."""
     pass
 
 
 @asc.group()
 def convert():
+    """Convert formats.
+
+    Usually the workflow is the following:
+
+    1) Convert scrape result into label-studio format.
+
+    2) Convert labelled data into ASC dataset format.
+    """
     pass
 
 
