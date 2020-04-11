@@ -54,7 +54,7 @@ def _completion_to_asc(completion, alias_to_label):
 
 
 def alias_to_label(config_xml):
-    # load label alias lookup table
+    """Load label alias lookup table from xml config file."""
     root = ET.parse(config_xml).getroot()
     lookup = defaultdict(dict)
     for label in root.findall('Labels'):

@@ -219,7 +219,10 @@ def scraper_to_label_studio(src, dst, start_from, pattern, max_per_file,
 @convert.command()
 @click.argument('src', type=click.Path(exists=True, readable=True))
 def label_studio_to_asc(src):
-    """Convert label-studio json completions to dataset."""
+    """Convert label-studio json completions to ASC dataset.
+
+    SRC is the config.json file inside completions directory.
+    """
     config = load_json(src)
     a2l = alias_to_label(config['label_config'])
     dataset = dict(completitions_to_asc(config['output_dir'], a2l))
