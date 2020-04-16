@@ -8,6 +8,7 @@ def format(base_dir):
     def f(page):
         for comment in page.comments:
             yield {
+                'id': int(comment['id']),
                 'data': {
                     'post_id': page.id,
                     'comment_id': comment['id'],

@@ -45,14 +45,16 @@ def scraper_to_label_studio(src, dst, start_from, pattern, max_per_file,
         with open(filename, 'w') as f:
             json.dump(out, f)
 
-    out = []
+    out = {}
     format_ = ls.format(base_path)
     with click.progressbar(src, length=count_lines(src.name)) as bar:
         for line in bar:
-            out.extend(format_(post.Post(json.loads(line))))
+            out.update({
+                v['data']['comment_id']: v
+                for v in format_(post.Post(json.loads(line)))})
             if max_per_file != -1 and len(out) >= max_per_file:
                 save(dst, pattern, start_from)
-                out = []
+                out = {}
                 start_from += 1
     if len(out) > 0:
         save(dst, pattern, start_from)
