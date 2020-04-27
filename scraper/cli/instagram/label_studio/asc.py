@@ -7,7 +7,7 @@ import json
 
 from ....label_studio import completitions_to_asc, alias_to_label
 from ....instagram import post, label_studio as ls
-from ....utils import count_lines, load_json
+from ....utils import count_lines, load_json, fill_buffer, save_json
 
 
 @click.group()
@@ -40,24 +40,16 @@ def convert():
 def scraper_to_label_studio(src, dst, start_from, pattern, max_per_file,
                             base_path):
     """Convert scraper hydratated posts to label-studio import files."""
-    def save(dst, pattern, start_from):
-        filename = os.path.join(dst, pattern.format(index=start_from))
-        with open(filename, 'w') as f:
-            json.dump(out, f)
-
-    out = {}
     format_ = ls.format(base_path)
+    fb = fill_buffer(
+            lambda line: {v['data']['comment_id']: v
+                          for v in format_(post.Post(json.loads(line)))},
+            max_per_file
+    )
     with click.progressbar(src, length=count_lines(src.name)) as bar:
-        for line in bar:
-            out.update({
-                v['data']['comment_id']: v
-                for v in format_(post.Post(json.loads(line)))})
-            if max_per_file != -1 and len(out) >= max_per_file:
-                save(dst, pattern, start_from)
-                out = {}
-                start_from += 1
-    if len(out) > 0:
-        save(dst, pattern, start_from)
+        for (index, data) in enumerate(fb(bar), start_from):
+            filename = os.path.join(dst, pattern.format(index=index))
+            save_json(filename, data)
 
 
 @convert.command()
