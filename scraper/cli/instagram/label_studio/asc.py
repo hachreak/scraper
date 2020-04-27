@@ -54,6 +54,23 @@ def scraper_to_label_studio(src, dst, start_from, pattern, max_per_file,
 
 @convert.command()
 @click.argument('src', type=click.Path(exists=True, readable=True))
+@click.argument('dst', type=click.File('w'))
+def get_images_from_label_studio(src, dst):
+    """Get list of images to use inside label-studio."""
+    filenames = os.listdir(src)
+    images = []
+    with click.progressbar(filenames, length=len(filenames)) as bar:
+        # load all images
+        for name in bar:
+            content = load_json(os.path.join(src, name))
+            for element in content.values():
+                images.append(element['data']['image'].split('/')[-1])
+        # save them
+        dst.write('\n'.join(set(images)))
+
+
+@convert.command()
+@click.argument('src', type=click.Path(exists=True, readable=True))
 def label_studio_to_asc(src):
     """Convert label-studio json completions to ASC dataset.
 
