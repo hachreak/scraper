@@ -79,22 +79,23 @@ def get_comments(shortcode, loader):
         lambda: _get_request_json(url_post.format(shortcode), params),
         (RequestException, JSONDecodeError)
     )
-    comments = _post['graphql']['shortcode_media'][
-        'edge_media_to_comment']['edges']
-    shmedia = _post['graphql']['shortcode_media']
-    info = shmedia['edge_media_to_comment']['page_info']
-    # check if there are more comments
-    if info['has_next_page']:
-        shortcode = _post['graphql'][
-            'shortcode_media']['shortcode']
-        # get all other comments
-        comments.extend(
-            _get_more_comments(url_post.format(shortcode), loader=loader)
-        )
-        # sort comments
-        sorted(comments, key=lambda x: x['node']['created_at'])
-        _post['graphql']['shortcode_media'][
-            'edge_media_to_comment']['edges'] = comments
+    comments = _post['graphql']['shortcode_media'].get(
+        'edge_media_to_comment', {}).get('edges', [])
+    if len(comments) > 0:
+        shmedia = _post['graphql']['shortcode_media']
+        info = shmedia['edge_media_to_comment']['page_info']
+        # check if there are more comments
+        if info['has_next_page']:
+            shortcode = _post['graphql'][
+                'shortcode_media']['shortcode']
+            # get all other comments
+            comments.extend(
+                _get_more_comments(url_post.format(shortcode), loader=loader)
+            )
+            # sort comments
+            sorted(comments, key=lambda x: x['node']['created_at'])
+            _post['graphql']['shortcode_media'][
+                'edge_media_to_comment']['edges'] = comments
     return _post
 
 
