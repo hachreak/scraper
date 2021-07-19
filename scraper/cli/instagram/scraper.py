@@ -75,3 +75,22 @@ def get_imgs(input_):
                 'shortcode_media']['display_resources'][-1]['src'])
         except json.decoder.JSONDecodeError:
             pass
+
+
+@scrape.command()
+@click.argument('input_', type=click.File('r'))
+def get_imgs_from_shortcode(input_):
+    """Get image path from shortcode."""
+    from scraper.instagram.scraper import url_post
+    from bs4 import BeautifulSoup
+    import requests
+
+    for shortcode in input_:
+        url = url_post.format(shortcode.strip())
+        res = requests.get(
+            url, headers={'User-Agent': 'Mozilla'}
+        )
+        soup = BeautifulSoup(res.text)
+        meta_img = [f for f in soup.findAll('meta')
+                    if f.get('property') == 'og:image'][0].get('content')
+        print(meta_img)
