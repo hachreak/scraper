@@ -59,7 +59,7 @@ setup(
         'requests>=2.21.0',
         'click>=7.0',
         'lxml>=4.3.0',
-        'selenium-wire>=1.0.0',
+        'selenium-wire<=3.0.6',
         'pyenchant>=2.0.0',
     ],
     #  extras_require={  # Optional
