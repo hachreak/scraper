@@ -2,7 +2,9 @@
 """Scraper CLI."""
 
 import click
+import requests
 import json
+import os
 
 from ... import exc, driver as drv
 from ...instagram import scraper
@@ -94,3 +96,17 @@ def get_imgs_from_shortcode(input_):
         meta_img = [f for f in soup.findAll('meta')
                     if f.get('property') == 'og:image'][0].get('content')
         print(meta_img)
+
+@scrape.command()
+@click.argument('ids', type=click.File('r'))
+@click.argument('urls', type=click.File('r'))
+@click.argument('dest_path', type=click.Path(exists=True, file_okay=False, dir_okay=True, 
+                writable=True))
+def download_images (ids, urls, dest_path):
+    """Download images using the list of ids and urls."""
+    for file1_line, file2_line in zip(ids, urls):
+        r = requests.get(file2_line)
+        images_path = file1_line
+        download_path = os.path.join(dest_path, images_path.strip()+'.jpg')
+        with open(download_path, 'wb') as f:
+            f.write(r.content)
